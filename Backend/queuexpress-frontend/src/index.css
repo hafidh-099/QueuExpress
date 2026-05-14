@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/* Custom theme configuration */
+@theme {
+  --color-primary: #0099CC;
+  --color-secondary: #00B140;
+  --color-dark: #1E293B;
+  --color-background: #F8FAFC;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  --color-success: #22C55E;
+}
+
+@layer components {
+  .card {
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+  
+  .card:hover {
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+  
+  .btn-primary:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 80%, black);
+    transform: scale(1.05);
+  }
+  
+  .btn-secondary {
+    background-color: var(--color-secondary);
+    color: white;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+  
+  .btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--color-secondary) 80%, black);
+  }
+  
+  .input-field {
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-width: 1px;
+    border-color: rgb(209 213 219);
+    border-radius: 0.5rem;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+  
+  .input-field:focus {
+    outline: none;
+    ring-width: 2px;
+    ring-color: var(--color-primary);
+    border-color: transparent;
+  }
+}
