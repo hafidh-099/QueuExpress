@@ -18,5 +18,13 @@ urlpatterns = [
     path('admin/feedback/', views.admin_feedback, name='admin_feedback'),
     path('admin/settings/', views.update_settings, name='update_settings'),
     path('admin/services/', views.admin_services, name='admin_services'),
+    path('admin/services/<int:service_id>/', views.admin_service_detail, name='admin_service_detail'),
     path('admin/staff/', views.admin_staff, name='admin_staff'),
+    path('admin/dashboard-stats/', views.admin_dashboard_stats, name='admin_dashboard_stats'),
+    path('admin/change-password/', views.admin_change_password, name='admin_change_password'),
+    path('admin/profile/', views.admin_profile, name='admin_profile'),
+    path('admin/settings/', views.system_settings, name='system_settings'),
+    
+    # Admin Staff Management
+path('admin/staff/<int:staff_id>/', views.admin_staff_update, name='admin_staff_update'),
 ]

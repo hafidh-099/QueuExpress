@@ -278,12 +278,13 @@ def skip_queue(request, queue_id):
 @permission_classes([IsAuthenticated])
 def staff_queue_list(request):
     """
-    Get all waiting queues for staff
+    Get all waiting queues for staff (admin can also view)
     GET /api/staff/queue-list/
     """
-    if not is_staff(request.user):
+    # Allow both staff and admin
+    if not is_staff(request.user) and not is_admin(request.user):
         return Response(
-            {'error': 'Staff access required'},
+            {'error': 'Access denied'},
             status=status.HTTP_403_FORBIDDEN
         )
     
@@ -291,14 +292,13 @@ def staff_queue_list(request):
         status__in=['waiting', 'called']
     ).order_by('created_at')
     
-    from .serializers import StaffQueueListSerializer
     serializer = StaffQueueListSerializer(waiting_queues, many=True)
     
     return Response({
         'count': waiting_queues.count(),
         'queues': serializer.data
     }, status=status.HTTP_200_OK)
-    
+
     # ==================== ADMIN APIs (JWT Required, role=admin) ====================
 
 def is_admin(user):
@@ -435,7 +435,6 @@ def admin_services(request):
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
 def admin_staff(request):
     """
     Get all staff or create new staff
@@ -450,18 +449,15 @@ def admin_staff(request):
     
     if request.method == 'GET':
         staff_users = User.objects.filter(role='staff')
-        from .serializers import AdminStaffSerializer
-        serializer = AdminStaffSerializer(staff_users, many=True)
+        serializer = AdminStaffSerializer(staff_users, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     elif request.method == 'POST':
-        from .serializers import AdminStaffCreateSerializer
         serializer = AdminStaffCreateSerializer(data=request.data)
         
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # Create staff user
         user = User.objects.create_user(
             username=serializer.validated_data['username'],
             password=serializer.validated_data['password'],
@@ -470,11 +466,277 @@ def admin_staff(request):
             role='staff'
         )
         
-        if 'profile_image' in serializer.validated_data:
-            user.profile_image = serializer.validated_data['profile_image']
+        # Handle profile image
+        if 'profile_image' in request.FILES:
+            user.profile_image = request.FILES['profile_image']
             user.save()
         
-        from .serializers import AdminStaffSerializer
-        response_serializer = AdminStaffSerializer(user)
-        
+        response_serializer = AdminStaffSerializer(user, context={'request': request})
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_dashboard_stats(request):
+    """
+    Get all dashboard stats for admin
+    GET /api/admin/dashboard-stats/
+    """
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Admin access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Get stats
+    total_served = Queue.objects.filter(status='served').count()
+    total_waiting = Queue.objects.filter(status__in=['waiting', 'called']).count()
+    total_skipped = Queue.objects.filter(status='skipped').count()
+    total_staff = User.objects.filter(role='staff').count()
+    
+    # Get recent queues (last 10)
+    recent_queues = Queue.objects.all().order_by('-created_at')[:10]
+    
+    recent_queues_data = []
+    for queue in recent_queues:
+        recent_queues_data.append({
+            'queue_id': queue.queue_id,
+            'queue_number': queue.queue_number,
+            'phone_number': queue.phone_number,
+            'service_name': queue.service.service_name,
+            'batch_number': queue.batch.batch_number,
+            'status': queue.status,
+            'created_at': queue.created_at,
+        })
+    
+    return Response({
+        'stats': {
+            'total_served': total_served,
+            'total_waiting': total_waiting,
+            'total_skipped': total_skipped,
+            'total_staff': total_staff,
+        },
+        'recent_queues': recent_queues_data
+    })
+    
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_change_password(request):
+    """
+    Change admin password
+    POST /api/admin/change-password/
+    """
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Admin access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response(
+            {'error': 'Current password and new password are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Check current password
+    if not request.user.check_password(current_password):
+        return Response(
+            {'error': 'Current password is incorrect'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Set new password
+    request.user.set_password(new_password)
+    request.user.save()
+    
+    return Response(
+        {'message': 'Password changed successfully'},
+        status=status.HTTP_200_OK
+    )
+    
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def admin_staff_update(request, staff_id):
+    """
+    Update or delete staff member
+    PUT /api/admin/staff/<staff_id>/
+    DELETE /api/admin/staff/<staff_id>/
+    """
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Admin access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        staff = User.objects.get(id=staff_id, role='staff')
+    except User.DoesNotExist:
+        return Response(
+            {'error': 'Staff not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Handle DELETE request
+    if request.method == 'DELETE':
+        staff.delete()
+        return Response(
+            {'message': 'Staff deleted successfully'},
+            status=status.HTTP_200_OK
+        )
+    
+    # Handle PUT request (update)
+    full_name = request.data.get('full_name')
+    work_id = request.data.get('work_id')
+    password = request.data.get('password')
+    
+    if full_name:
+        staff.full_name = full_name
+    
+    if work_id:
+        # Check if work_id is unique
+        if User.objects.filter(work_id=work_id).exclude(id=staff_id).exists():
+            return Response(
+                {'error': 'Work ID already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        staff.work_id = work_id
+    
+    # Handle profile image upload
+    if 'profile_image' in request.FILES:
+        staff.profile_image = request.FILES['profile_image']
+    
+    if password:
+        if len(password) < 6:
+            return Response(
+                {'error': 'Password must be at least 6 characters'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        staff.set_password(password)
+    
+    staff.save()
+    
+    from .serializers import AdminStaffSerializer
+    serializer = AdminStaffSerializer(staff, context={'request': request})
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_profile(request):
+    """
+    Get admin profile
+    GET /api/admin/profile/
+    """
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Admin access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    from .serializers import AdminStaffSerializer
+    serializer = AdminStaffSerializer(request.user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def admin_service_detail(request, service_id):
+    """
+    Update or delete a service
+    PUT /api/admin/services/<service_id>/
+    DELETE /api/admin/services/<service_id>/
+    """
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Admin access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        service = Service.objects.get(service_id=service_id)
+    except Service.DoesNotExist:
+        return Response(
+            {'error': 'Service not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    if request.method == 'PUT':
+        service_name = request.data.get('service_name')
+        if not service_name:
+            return Response(
+                {'error': 'service_name is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if service name already exists
+        if Service.objects.filter(service_name=service_name).exclude(service_id=service_id).exists():
+            return Response(
+                {'error': 'Service with this name already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        service.service_name = service_name
+        service.save()
+        
+        from .serializers import ServiceSerializer
+        serializer = ServiceSerializer(service)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    elif request.method == 'DELETE':
+        # Check if service has any queues before deleting
+        if service.queues.exists():
+            return Response(
+                {'error': 'Cannot delete service with existing queues'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        service.delete()
+        return Response(
+            {'message': 'Service deleted successfully'},
+            status=status.HTTP_200_OK
+        )
+
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
+def system_settings(request):
+    """
+    Get or update system settings
+    GET /api/admin/settings/
+    PUT /api/admin/settings/
+    """
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Admin access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    settings = Settings.objects.first()
+    if not settings:
+        # Create default settings if none exist
+        settings = Settings.objects.create(batch_size=10, reset_time='00:00:00')
+    
+    if request.method == 'GET':
+        from .serializers import SettingsSerializer
+        serializer = SettingsSerializer(settings)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    elif request.method == 'PUT':
+        batch_size = request.data.get('batch_size')
+        reset_time = request.data.get('reset_time')
+        
+        if batch_size:
+            try:
+                settings.batch_size = int(batch_size)
+            except ValueError:
+                return Response(
+                    {'error': 'batch_size must be an integer'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        if reset_time:
+            settings.reset_time = reset_time
+        
+        settings.save()
+        
+        from .serializers import SettingsSerializer
+        serializer = SettingsSerializer(settings)
+        return Response(serializer.data, status=status.HTTP_200_OK)

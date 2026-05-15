@@ -1,5 +1,4 @@
-import React from 'react';
-import { createContext, useState, useContext, useEffect } from 'react'
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext();
@@ -28,6 +27,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user_role', user.role);
       
       setUser(user);
       return { success: true, role: user.role };
@@ -40,9 +40,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.clear();
+    // Clear all local storage
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('user_role');
+    sessionStorage.clear();
+    
+    // Reset user state
     setUser(null);
-    window.location.href = '/login';
+    
+    // Do NOT redirect here - let the component handle redirect
   };
 
   const value = {

@@ -37,8 +37,18 @@ const AdminLayout = () => {
   ];
 
   const handleLogout = () => {
+    // Clear all local storage
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('user_role');
+    sessionStorage.clear();
+    
+    // Call the logout function from context
     logout();
-    navigate('/');
+    
+    // Navigate to staff-login (security: hide admin login path)
+    navigate('/staff-login');
   };
 
   const isActive = (path) => {

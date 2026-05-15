@@ -43,8 +43,9 @@ api.interceptors.response.use(
         
         return api(originalRequest);
       } catch (refreshError) {
+        // Clear storage but don't redirect - let the component handle it
         localStorage.clear();
-        window.location.href = '/login';
+        sessionStorage.clear();
         return Promise.reject(refreshError);
       }
     }

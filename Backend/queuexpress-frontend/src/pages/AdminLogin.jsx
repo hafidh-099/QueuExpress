@@ -1,52 +1,50 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { FaUser, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from "react-icons/fa";
-import Logo from "../components/Logo";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
+import Logo from '../components/Logo';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-
+  
   const [formData, setFormData] = useState({
-    username: "",
-    password: "",
+    username: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError("");
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!formData.username || !formData.password) {
-      setError("Please enter username and password");
+      setError('Please enter username and password');
       return;
     }
-
+    
     setLoading(true);
-    setError("");
+    setError('');
 
-    const result = await login(
-      {
-        username: formData.username,
-        password: formData.password,
-      },
-      "admin",
-    );
-
-    if (result.success && result.role === "admin") {
-      navigate("/admin/dashboard");
+    const result = await login({
+      username: formData.username,
+      password: formData.password,
+    }, 'admin');
+    
+    if (result.success && result.role === 'admin') {
+      navigate('/admin/dashboard');
     } else {
-      setError(result.error || "Invalid admin credentials");
+      setError(result.error || 'Invalid admin credentials');
+      // Stay on admin-login page, don't redirect
     }
-
+    
     setLoading(false);
   };
 
@@ -54,12 +52,10 @@ const AdminLogin = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <div className="container mx-auto px-4 min-h-screen flex items-center justify-center">
         <div className="max-w-4xl w-full flex flex-col lg:flex-row bg-white rounded-3xl shadow-2xl overflow-hidden">
+          
           {/* Left Side - Admin Branding */}
           <div className="lg:w-1/2 bg-gradient-to-br from-primary to-primary/80 p-8 lg:p-12 flex flex-col justify-center items-center text-center">
-            <Link
-              to="/"
-              className="absolute top-6 left-6 text-white/80 hover:text-white transition-colors flex items-center gap-2"
-            >
+            <Link to="/" className="absolute top-6 left-6 text-white/80 hover:text-white transition-colors flex items-center gap-2">
               <FaArrowLeft /> Back
             </Link>
             <div className="mb-8">
@@ -67,24 +63,41 @@ const AdminLogin = () => {
                 <FaUser className="text-white text-6xl" />
               </div>
             </div>
-
-            <h2 className="text-3xl font-bold text-white mb-3">Admin Portal</h2>
-
-            <p className="text-white/90 text-sm">System Administrator Access</p>
-
+            
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Admin Portal
+            </h2>
+            
+            <p className="text-white/90 text-sm mb-6">
+              "Leadership in every click"
+            </p>
+            
             <div className="mt-8 pt-8 border-t border-white/20 w-full">
-              <div className="space-y-2 text-white/70 text-xs">
-                <p> Secure admin authentication required</p>
-                <p> Use your privilage wisely</p>
-                <p> Empower your team with smart tools</p>
+              <div className="space-y-3 text-white/80 text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">📊</span>
+                  <span>Gain complete system oversight</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">👥</span>
+                  <span>Empower your team with smart tools</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">📈</span>
+                  <span>Make data-driven decisions</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">⚙️</span>
+                  <span>Configure and optimize operations</span>
+                </div>
               </div>
             </div>
           </div>
-
+          
           {/* Right Side - Admin Login Form */}
           <div className="lg:w-1/2 p-8 lg:p-12">
             <div className="mb-8 text-center lg:text-left">
-              <Logo type="full" size="md" />
+              <Logo className="mx-auto lg:mx-0" />
               <h3 className="text-2xl font-bold text-dark mt-6">
                 Admin Sign In
               </h3>
@@ -92,13 +105,13 @@ const AdminLogin = () => {
                 Enter your administrator credentials
               </p>
             </div>
-
+            
             {error && (
               <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                 {error}
               </div>
             )}
-
+            
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -118,7 +131,7 @@ const AdminLogin = () => {
                   />
                 </div>
               </div>
-
+              
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Password
@@ -126,7 +139,7 @@ const AdminLogin = () => {
                 <div className="relative">
                   <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
@@ -143,7 +156,7 @@ const AdminLogin = () => {
                   </button>
                 </div>
               </div>
-
+              
               <button
                 type="submit"
                 disabled={loading}
@@ -155,7 +168,7 @@ const AdminLogin = () => {
                     Verifying...
                   </>
                 ) : (
-                  "Login as Admin"
+                  'Login as Admin'
                 )}
               </button>
             </form>

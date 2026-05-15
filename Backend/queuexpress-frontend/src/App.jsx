@@ -10,6 +10,13 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/Profile';
 import StaffManagement from './pages/admin/StaffManagement';
+import Services from './pages/admin/Services';
+import Reports from './pages/admin/Reports';
+import Feedback from './pages/admin/Feedback';
+import QRManagement from './pages/admin/QRManagement';
+import Join from './pages/Join';
+import Settings from './pages/admin/Settings';
+import Logout from './pages/Logout';
 
 const queryClient = new QueryClient();
 
@@ -19,6 +26,8 @@ function App() {
       <Router>
         <AuthProvider>
           <Routes>
+            <Route path="/logout" element={<Logout />} />
+            <Route path="/join" element={<Join />} />
             <Route path="/" element={<RoleSelect />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/staff-login" element={<StaffLogin />} />
@@ -29,6 +38,11 @@ function App() {
                 <AdminLayout />
               </ProtectedRoute>
             }>
+              <Route path="settings" element={<Settings />} />
+              <Route path="qr-management" element={<QRManagement />} />
+              <Route path="feedback" element={<Feedback />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="services" element={<Services />} />
               <Route path="staff" element={<StaffManagement />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="dashboard" element={<AdminDashboard />} />

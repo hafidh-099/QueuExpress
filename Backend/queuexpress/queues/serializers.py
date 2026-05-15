@@ -120,12 +120,20 @@ class AdminReportSerializer(serializers.Serializer):
 
 class AdminStaffSerializer(serializers.ModelSerializer):
     """Serializer for admin staff management"""
+    profile_image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'full_name', 'work_id', 'role', 'profile_image', 'is_active']
+        fields = ['id', 'username', 'full_name', 'work_id', 'role', 'profile_image', 'profile_image_url', 'is_active']
         read_only_fields = ['id']
-
+    
+    def get_profile_image_url(self, obj):
+        if obj.profile_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_image.url)
+            return obj.profile_image.url
+        return None
 
 class AdminStaffCreateSerializer(serializers.Serializer):
     """Serializer for admin creating staff"""

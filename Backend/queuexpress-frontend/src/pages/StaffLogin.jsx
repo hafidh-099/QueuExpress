@@ -1,58 +1,52 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import {
-  FaIdCard,
-  FaLock,
-  FaEye,
-  FaEyeSlash,
-  FaArrowLeft,
-} from "react-icons/fa";
-import Logo from "../components/Logo";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { FaIdCard, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
+import Logo from '../components/Logo';
 
 const StaffLogin = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-
+  
   const [formData, setFormData] = useState({
-    work_id: "",
-    password: "",
+    work_id: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError("");
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!formData.work_id || !formData.password) {
-      setError("Please enter Work ID and password");
+      setError('Please enter Work ID and password');
       return;
     }
-
+    
     setLoading(true);
-    setError("");
+    setError('');
 
-    const result = await login(
-      {
-        work_id: formData.work_id,
-        password: formData.password,
-      },
-      "staff",
-    );
-
-    if (result.success && result.role === "staff") {
-      navigate("/staff/dashboard");
+    const result = await login({
+      work_id: formData.work_id,
+      password: formData.password,
+    }, 'staff');
+    
+    if (result.success && result.role === 'staff') {
+      navigate('/staff/dashboard');
+    } else if (result.success && result.role === 'admin') {
+      // If somehow admin tries to login as staff
+      setError('Invalid staff credentials');
     } else {
-      setError(result.error || "Invalid staff credentials");
+      setError(result.error || 'Invalid staff credentials');
     }
-
+    
     setLoading(false);
   };
 
@@ -60,12 +54,10 @@ const StaffLogin = () => {
     <div className="min-h-screen bg-gradient-to-br from-secondary/10 via-background to-primary/10">
       <div className="container mx-auto px-4 min-h-screen flex items-center justify-center">
         <div className="max-w-4xl w-full flex flex-col lg:flex-row bg-white rounded-3xl shadow-2xl overflow-hidden">
+          
           {/* Left Side - Staff Branding */}
           <div className="lg:w-1/2 bg-gradient-to-br from-secondary to-secondary/80 p-8 lg:p-12 flex flex-col justify-center items-center text-center">
-            <Link
-              to="/"
-              className="absolute top-6 left-6 text-white/80 hover:text-white transition-colors flex items-center gap-2"
-            >
+            <Link to="/" className="absolute top-6 left-6 text-white/80 hover:text-white transition-colors flex items-center gap-2">
               <FaArrowLeft /> Back
             </Link>
             <div className="mb-8">
@@ -73,24 +65,41 @@ const StaffLogin = () => {
                 <FaIdCard className="text-white text-6xl" />
               </div>
             </div>
-
-            <h2 className="text-3xl font-bold text-white mb-3">Staff Portal</h2>
-
-            <p className="text-white/90 text-sm">Service Personnel Access</p>
-
+            
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Staff Portal
+            </h2>
+            
+            <p className="text-white/90 text-sm mb-6">
+              "Service excellence starts here"
+            </p>
+            
             <div className="mt-8 pt-8 border-t border-white/20 w-full">
-              <div className="space-y-2 text-white/70 text-xs">
-                <p> Deliver swift, seamless service</p>
-                <p> Create memorable customer experiences</p>
-                <p> Manage queues with confidence</p>
+              <div className="space-y-3 text-white/80 text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">🎯</span>
+                  <span>Deliver swift, seamless service</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">🤝</span>
+                  <span>Create memorable customer experiences</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">⚡</span>
+                  <span>Manage queues with confidence</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">⭐</span>
+                  <span>Build trust through efficiency</span>
+                </div>
               </div>
             </div>
           </div>
-
+          
           {/* Right Side - Staff Login Form */}
           <div className="lg:w-1/2 p-8 lg:p-12">
             <div className="mb-8 text-center lg:text-left">
-              <Logo type="full" size="md" />
+              <Logo className="mx-auto lg:mx-0" />
               <h3 className="text-2xl font-bold text-dark mt-6">
                 Staff Sign In
               </h3>
@@ -98,13 +107,13 @@ const StaffLogin = () => {
                 Enter your work ID and password
               </p>
             </div>
-
+            
             {error && (
               <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                 {error}
               </div>
             )}
-
+            
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -124,7 +133,7 @@ const StaffLogin = () => {
                   />
                 </div>
               </div>
-
+              
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Password
@@ -132,7 +141,7 @@ const StaffLogin = () => {
                 <div className="relative">
                   <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-secondary transition-colors" />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
@@ -149,7 +158,7 @@ const StaffLogin = () => {
                   </button>
                 </div>
               </div>
-
+              
               <button
                 type="submit"
                 disabled={loading}
@@ -161,11 +170,11 @@ const StaffLogin = () => {
                     Verifying...
                   </>
                 ) : (
-                  "Login as Staff"
+                  'Login as Staff'
                 )}
               </button>
             </form>
-
+            
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-400">
                 Contact administrator if you don't have Work ID
