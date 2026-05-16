@@ -284,7 +284,7 @@ def staff_queue_list(request):
     # Allow both staff and admin
     if not is_staff(request.user) and not is_admin(request.user):
         return Response(
-            {'error': 'Access denied'},
+            {'error': 'Access denied. Staff or Admin access required.'},
             status=status.HTTP_403_FORBIDDEN
         )
     
@@ -292,6 +292,8 @@ def staff_queue_list(request):
         status__in=['waiting', 'called']
     ).order_by('created_at')
     
+    # Use the serializer
+    from .serializers import StaffQueueListSerializer
     serializer = StaffQueueListSerializer(waiting_queues, many=True)
     
     return Response({
@@ -299,6 +301,92 @@ def staff_queue_list(request):
         'queues': serializer.data
     }, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def debug_queues(request):
+    """
+    Debug endpoint to check queue data
+    """
+    if not is_admin(request.user):
+        return Response({'error': 'Admin only'}, status=403)
+    
+    all_queues = Queue.objects.all().order_by('-created_at')[:20]
+    data = []
+    for q in all_queues:
+        data.append({
+            'id': q.queue_id,
+            'number': q.queue_number,
+            'phone': q.phone_number,
+            'service': q.service.service_name,
+            'batch': q.batch.batch_number,
+            'status': q.status,
+            'created': str(q.created_at),
+        })
+    
+    return Response({
+        'total': Queue.objects.count(),
+        'queues': data
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def staff_profile(request):
+    """
+    Get staff profile
+    GET /api/staff/profile/
+    """
+    if not is_staff(request.user):
+        return Response(
+            {'error': 'Staff access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    from .serializers import AdminStaffSerializer
+    serializer = AdminStaffSerializer(request.user, context={'request': request})
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def staff_change_password(request):
+    """
+    Change staff password
+    POST /api/staff/change-password/
+    """
+    if not is_staff(request.user):
+        return Response(
+            {'error': 'Staff access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response(
+            {'error': 'Current password and new password are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not request.user.check_password(current_password):
+        return Response(
+            {'error': 'Current password is incorrect'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if len(new_password) < 6:
+        return Response(
+            {'error': 'Password must be at least 6 characters'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    request.user.set_password(new_password)
+    request.user.save()
+    
+    return Response(
+        {'message': 'Password changed successfully'},
+        status=status.HTTP_200_OK
+    )
     # ==================== ADMIN APIs (JWT Required, role=admin) ====================
 
 def is_admin(user):
@@ -740,3 +828,36 @@ def system_settings(request):
         from .serializers import SettingsSerializer
         serializer = SettingsSerializer(settings)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_all_queues(request):
+    """
+    Get all queues for admin (including served and skipped)
+    GET /api/admin/all-queues/
+    """
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Admin access required'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Get all queues, ordered by most recent first
+    all_queues = Queue.objects.all().order_by('-created_at')
+    
+    queues_data = []
+    for queue in all_queues:
+        queues_data.append({
+            'queue_id': queue.queue_id,
+            'queue_number': queue.queue_number,
+            'phone_number': queue.phone_number,
+            'service_name': queue.service.service_name,
+            'batch_number': queue.batch.batch_number,
+            'status': queue.status,
+            'created_at': queue.created_at,
+        })
+    
+    return Response({
+        'total': all_queues.count(),
+        'queues': queues_data
+    }, status=status.HTTP_200_OK)

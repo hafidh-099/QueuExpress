@@ -5,19 +5,15 @@ import Logo from '../components/Logo';
 import { 
   FaTachometerAlt, 
   FaUser, 
-  FaUsers, 
-  FaServicestack, 
-  FaChartBar, 
-  FaComments, 
-  FaQrcode, 
-  FaCog, 
+  FaListAlt, 
+  FaPhoneAlt, 
   FaSignOutAlt,
   FaBars,
   FaTimes,
   FaChevronDown
 } from 'react-icons/fa';
 
-const AdminLayout = () => {
+const StaffLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,28 +22,19 @@ const AdminLayout = () => {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const menuItems = [
-    { path: '/admin/dashboard', name: 'Dashboard', icon: <FaTachometerAlt /> },
-    { path: '/admin/staff', name: 'Staff Management', icon: <FaUsers /> },
-    { path: '/admin/services', name: 'Services', icon: <FaServicestack /> },
-    { path: '/admin/reports', name: 'Reports', icon: <FaChartBar /> },
-    { path: '/admin/feedback', name: 'Feedback', icon: <FaComments /> },
-    { path: '/admin/qr-management', name: 'QR Management', icon: <FaQrcode /> },
-    { path: '/admin/settings', name: 'Settings', icon: <FaCog /> },
-    { path: '/admin/profile', name: 'Profile', icon: <FaUser /> },
+    { path: '/staff/dashboard', name: 'Dashboard', icon: <FaTachometerAlt /> },
+    { path: '/staff/queue-list', name: 'Queue List', icon: <FaListAlt /> },
+    { path: '/staff/queue-control', name: 'Queue Control', icon: <FaPhoneAlt /> },
+    { path: '/staff/profile', name: 'Profile', icon: <FaUser /> },
   ];
 
   const handleLogout = () => {
-    // Clear all local storage
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     localStorage.removeItem('user_role');
     sessionStorage.clear();
-    
-    // Call the logout function from context
     logout();
-    
-    // Navigate to staff-login (security: hide admin login path)
     navigate('/staff-login');
   };
 
@@ -61,7 +48,7 @@ const AdminLayout = () => {
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="bg-primary text-white p-2 rounded-lg shadow-lg"
+          className="bg-secondary text-white p-2 rounded-lg shadow-lg"
         >
           {mobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
         </button>
@@ -97,7 +84,7 @@ const AdminLayout = () => {
                 w-full flex items-center gap-3 px-4 py-3 transition-all duration-200
                 ${sidebarOpen ? 'justify-start' : 'lg:justify-center'}
                 ${isActive(item.path) 
-                  ? 'bg-primary/20 border-r-4 border-primary text-primary' 
+                  ? 'bg-secondary/20 border-r-4 border-secondary text-secondary' 
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
               `}
@@ -117,9 +104,8 @@ const AdminLayout = () => {
         {/* Top Navbar */}
         <div className="bg-white shadow-sm sticky top-0 z-30">
           <div className="px-6 py-4 flex justify-between items-center">
-            {/* Page Title */}
             <h1 className="text-xl font-semibold text-dark">
-              {menuItems.find(item => isActive(item.path))?.name || 'Dashboard'}
+              {menuItems.find(item => isActive(item.path))?.name || 'Staff Dashboard'}
             </h1>
             
             {/* Profile Dropdown */}
@@ -128,9 +114,9 @@ const AdminLayout = () => {
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors"
               >
-                <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-secondary to-secondary/80 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
-                    {user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'A'}
+                    {user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'S'}
                   </span>
                 </div>
                 <div className="hidden md:block text-left">
@@ -140,7 +126,6 @@ const AdminLayout = () => {
                 <FaChevronDown className={`text-gray-400 text-xs transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Dropdown Menu */}
               {profileDropdownOpen && (
                 <>
                   <div 
@@ -148,16 +133,16 @@ const AdminLayout = () => {
                     onClick={() => setProfileDropdownOpen(false)}
                   />
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                    <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-primary/5 to-secondary/5">
+                    <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-secondary/5 to-primary/5">
                       <p className="font-semibold text-dark">{user?.full_name || user?.username}</p>
-                      <p className="text-sm text-gray-500">{user?.username}</p>
-                      <p className="text-xs text-primary capitalize mt-1">{user?.role}</p>
+                      <p className="text-sm text-gray-500">{user?.work_id}</p>
+                      <p className="text-xs text-secondary capitalize mt-1">{user?.role}</p>
                     </div>
                     <div className="py-2">
                       <button
                         onClick={() => {
                           setProfileDropdownOpen(false);
-                          navigate('/admin/profile');
+                          navigate('/staff/profile');
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
@@ -182,13 +167,11 @@ const AdminLayout = () => {
           </div>
         </div>
 
-        {/* Page Content */}
         <div className="p-6">
           <Outlet />
         </div>
       </div>
 
-      {/* Overlay for mobile */}
       {mobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
@@ -199,4 +182,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default StaffLayout;
