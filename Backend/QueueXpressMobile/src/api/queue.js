@@ -1,0 +1,33 @@
+import api from './client';
+
+// Join queue
+export const joinQueue = async (phoneNumber, serviceId) => {
+  const response = await api.post('/join/', {
+    phone_number: phoneNumber,
+    service_id: serviceId,
+  });
+  return response.data;
+};
+
+// Get queue status
+export const getQueueStatus = async (queueId) => {
+  const response = await api.get(`/queue/status/${queueId}/`);
+  return response.data;
+};
+
+// Submit feedback
+export const submitFeedback = async (queueId, rating, message) => {
+  const response = await api.post('/feedback/', {
+    queue_id: queueId,
+    rating: rating,
+    message: message,
+  });
+  return response.data;
+};
+
+// Get services list
+export const getServices = async () => {
+  // Using admin endpoint (public for now)
+  const response = await api.get('/admin/services/');
+  return response.data;
+};

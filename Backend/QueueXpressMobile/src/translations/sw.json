@@ -1,0 +1,94 @@
+{
+  "common": {
+    "loading": "Inapakia...",
+    "error": "Kuna hitilafu",
+    "retry": "Jaribu tena",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "submit": "Wasilisha"
+  },
+  "tabs": {
+    "status": "Hali ya Foleni",
+    "scan": "Scan QR",
+    "feedback": "Maoni",
+    "settings": "Mipangilio"
+  },
+  "status": {
+    "title": "Hali Yako ya Foleni",
+    "queueNumber": "Namba ya Foleni",
+    "batchNumber": "Namba ya Kundi",
+    "status": "Hali",
+    "peopleAhead": "Watu Mbele Yako",
+    "estimatedTime": "Muda uliokadiriwa",
+    "noQueue": "Huna Foleni Inayoendelea",
+    "noQueueMessage": "Scan QR code kujiunga na foleni",
+    "scanButton": "Scan QR Code",
+    "waiting": "Umesubiri",
+    "called": "Umeitwa",
+    "served": "Umehudumiwa",
+    "skipped": "Umerukwa",
+    "minutes": "dak"
+  },
+  "scan": {
+    "title": "Scan QR Code",
+    "permissionTitle": "Ruhusa ya Kamera",
+    "permissionMessage": "QueueXpress inahitaji ruhusa ya kamera ili kuscan QR code",
+    "allow": "Ruhusu",
+    "deny": "Kataa",
+    "scanning": "Inasikana...",
+    "invalidQR": "QR Code si sahihi",
+    "flashlight": "Mwangaza"
+  },
+  "join": {
+    "title": "Jiunge na Foleni",
+    "service": "Chagua Huduma",
+    "phoneNumber": "Namba ya Simu",
+    "phonePlaceholder": "623101586",
+    "phoneHint": "Weka tarakimu 9 (bila 0 au +255)",
+    "joinButton": "Jiunga",
+    "joining": "Inajiunga...",
+    "success": "Umefanikiwa kujiunga na foleni!",
+    "error": "Imeshindwa kujiunga",
+    "validation": {
+      "serviceRequired": "Tafadhali chagua huduma",
+      "phoneRequired": "Namba ya simu inahitajika",
+      "phoneInvalid": "Tafadhali weka tarakimu 9"
+    }
+  },
+  "feedback": {
+    "title": "Toa Maoni Yako",
+    "rating": "Kiwango Chako",
+    "message": "Ujumbe Wako",
+    "messagePlaceholder": "Tuambie kuhusu uzoefu wako...",
+    "submitButton": "Wasilisha Maoni",
+    "submitting": "Inawasilisha...",
+    "success": "Asante kwa maoni yako!",
+    "error": "Imeshindwa kuwasilisha maoni",
+    "validation": {
+      "ratingRequired": "Tafadhali chagua kiwango"
+    }
+  },
+  "settings": {
+    "title": "Mipangilio",
+    "language": "Lugha",
+    "english": "English",
+    "swahili": "Kiswahili",
+    "theme": "Mandhari",
+    "light": "Mwangaza",
+    "dark": "Giza",
+    "helpCenter": "Kituo cha Msaada",
+    "supportEmail": "support@queuexpress.com",
+    "supportPhone": "+255 623 101 586",
+    "about": "Kuhusu",
+    "version": "Toleo 1.0.0",
+    "copyright": "© 2026 QueueXpress. Haki zote zimehifadhiwa."
+  },
+  "notifications": {
+    "approaching": "Zamu yako inakaribia",
+    "approachingBody": "Tafadhali jiandae kuhudhuria kituo cha huduma.",
+    "almostThere": "Uko karibu!",
+    "almostThereBody": "Wateja 5 tu wamebakia kabla ya zamu yako. Tafadhali karibia eneo la huduma.",
+    "youAreNext": "Wewe ndiye unaofuata!",
+    "youAreNextBody": "Tafadhali enda kwenye kaunta ya huduma."
+  }
+}
