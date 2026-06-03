@@ -11,29 +11,25 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { getColors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
 const ScanQRScreen = () => {
+
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [flashlight, setFlashlight] = useState(false);
-  const [colors, setColors] = useState(getColors('light'));
   const scanAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    loadTheme();
     startScanAnimation();
   }, []);
-
-  const loadTheme = async () => {
-    setColors(getColors('light'));
-  };
 
   const startScanAnimation = () => {
     Animated.loop(
@@ -90,7 +86,7 @@ const ScanQRScreen = () => {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.messageContainer}>
-          <Icon name="camera-outline" size={60} color={colors.textSecondary} />
+          <Ionicons name="camera-outline" size={60} color={colors.textSecondary} />
           <Text style={[styles.messageTitle, { color: colors.text }]}>
             {t('scan.permissionTitle')}
           </Text>
@@ -143,7 +139,7 @@ const ScanQRScreen = () => {
         style={[styles.flashlightButton, { backgroundColor: colors.surface }]}
         onPress={() => setFlashlight(!flashlight)}
       >
-        <Icon 
+        <Ionicons 
           name={flashlight ? 'flashlight' : 'flashlight-outline'} 
           size={24} 
           color={colors.primary} 

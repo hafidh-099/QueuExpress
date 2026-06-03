@@ -43,7 +43,7 @@
     "title": "Join the Queue",
     "service": "Select Service",
     "phoneNumber": "Phone Number",
-    "phonePlaceholder": "623101586",
+    "phonePlaceholder": "Enter 9 digits",
     "phoneHint": "Enter 9 digits (without 0 or +255)",
     "joinButton": "Join Queue",
     "joining": "Joining...",
@@ -87,7 +87,7 @@
     "approaching": "Your turn is approaching",
     "approachingBody": "Please prepare to visit the service center.",
     "almostThere": "Almost there!",
-    "almostThereBody": "Only 5 customers remain before your turn. Please move closer to the service area.",
+    "almostThereBody": "Only 5 customers remain before your turn.",
     "youAreNext": "You are next!",
     "youAreNextBody": "Please proceed to the service counter."
   }

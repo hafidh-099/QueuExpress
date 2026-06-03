@@ -8,34 +8,34 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import Logo from '../components/Logo';
 import { joinQueue, getServices } from '../api/queue';
 import { saveQueueData } from '../storage/storage';
 import { getColors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 const JoinQueueScreen = ({ route }) => {
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation();
   const { qrData } = route.params || {};
-  const [colors, setColors] = useState(getColors('light'));
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
+  const [selectedServiceName, setSelectedServiceName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [errors, setErrors] = useState({});
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   useEffect(() => {
-    loadTheme();
     fetchServices();
   }, []);
-
-  const loadTheme = async () => {
-    setColors(getColors('light'));
-  };
 
   const fetchServices = async () => {
     try {
@@ -106,6 +106,15 @@ const JoinQueueScreen = ({ route }) => {
     }
   };
 
+  const selectService = (service) => {
+    setSelectedService(service.service_id);
+    setSelectedServiceName(service.service_name);
+    setDropdownVisible(false);
+    if (errors.service) {
+      setErrors({ ...errors, service: null });
+    }
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <Logo size="small" showText={false} />
@@ -113,56 +122,31 @@ const JoinQueueScreen = ({ route }) => {
       <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.dark }]}>
         <Text style={[styles.title, { color: colors.text }]}>{t('join.title')}</Text>
         
-        {/* Service Selection */}
+        {/* Service Dropdown */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {t('join.service')} <Text style={{ color: colors.danger }}>*</Text>
+            {t('join.service')} <Text style={{ color: '#EF4444' }}>*</Text>
           </Text>
-          <View style={styles.servicesContainer}>
-            {services.map((service) => (
-              <TouchableOpacity
-                key={service.service_id}
-                style={[
-                  styles.serviceButton,
-                  {
-                    backgroundColor: selectedService === service.service_id 
-                      ? colors.primary 
-                      : colors.surface,
-                    borderColor: colors.border,
-                    borderWidth: 1,
-                  },
-                ]}
-                onPress={() => {
-                  setSelectedService(service.service_id);
-                  if (errors.service) {
-                    setErrors({ ...errors, service: null });
-                  }
-                }}
-              >
-                <Text
-                  style={[
-                    styles.serviceButtonText,
-                    {
-                      color: selectedService === service.service_id 
-                        ? '#FFFFFF' 
-                        : colors.text,
-                    },
-                  ]}
-                >
-                  {service.service_name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          
+          <TouchableOpacity
+            style={[styles.dropdown, { borderColor: colors.border, backgroundColor: colors.surface }]}
+            onPress={() => setDropdownVisible(true)}
+          >
+            <Text style={[styles.dropdownText, { color: selectedService ? colors.text : colors.textSecondary }]}>
+              {selectedServiceName || t('join.service')}
+            </Text>
+            <Ionicons name="chevron-down-outline" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+          
           {errors.service && (
-            <Text style={[styles.errorText, { color: colors.danger }]}>{errors.service}</Text>
+            <Text style={[styles.errorText, { color: '#EF4444' }]}>{errors.service}</Text>
           )}
         </View>
         
         {/* Phone Number Input */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {t('join.phoneNumber')} <Text style={{ color: colors.danger }}>*</Text>
+            {t('join.phoneNumber')} <Text style={{ color: '#EF4444' }}>*</Text>
           </Text>
           <View style={[styles.phoneContainer, { borderColor: colors.border, backgroundColor: colors.surface }]}>
             <View style={[styles.countryCode, { backgroundColor: colors.background }]}>
@@ -182,7 +166,7 @@ const JoinQueueScreen = ({ route }) => {
             {t('join.phoneHint')}
           </Text>
           {errors.phone && (
-            <Text style={[styles.errorText, { color: colors.danger }]}>{errors.phone}</Text>
+            <Text style={[styles.errorText, { color: '#EF4444' }]}>{errors.phone}</Text>
           )}
         </View>
         
@@ -195,10 +179,53 @@ const JoinQueueScreen = ({ route }) => {
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.joinButtonText}>{t('join.joinButton')}</Text>
+            <>
+              <Ionicons name="enter-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.joinButtonText}>{t('join.joinButton')}</Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Service Dropdown Modal */}
+      <Modal
+        visible={dropdownVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDropdownVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setDropdownVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('join.service')}</Text>
+              <TouchableOpacity onPress={() => setDropdownVisible(false)}>
+                <Ionicons name="close-outline" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={services}
+              keyExtractor={(item) => item.service_id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.modalItem, { borderBottomColor: colors.border }]}
+                  onPress={() => selectService(item)}
+                >
+                  <Text style={[styles.modalItemText, { color: colors.text }]}>
+                    {item.service_name}
+                  </Text>
+                  {selectedService === item.service_id && (
+                    <Ionicons name="checkmark-outline" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
@@ -233,21 +260,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 8,
   },
-  servicesContainer: {
+  dropdown: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  serviceButton: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 25,
-    marginRight: 10,
-    marginBottom: 10,
+    paddingVertical: 14,
   },
-  serviceButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
+  dropdownText: {
+    fontSize: 16,
   },
   phoneContainer: {
     flexDirection: 'row',
@@ -258,7 +281,7 @@ const styles = StyleSheet.create({
   },
   countryCode: {
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRightWidth: 1,
     borderRightColor: '#E2E8F0',
   },
@@ -269,7 +292,7 @@ const styles = StyleSheet.create({
   phoneInput: {
     flex: 1,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 16,
   },
   hintText: {
@@ -281,15 +304,50 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   joinButton: {
+    flexDirection: 'row',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     marginTop: 10,
   },
   joinButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    maxHeight: '60%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  modalItemText: {
+    fontSize: 16,
   },
 });
 

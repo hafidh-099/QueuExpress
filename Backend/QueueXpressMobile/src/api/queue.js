@@ -1,6 +1,6 @@
 import api from './client';
 
-// Join queue
+// Join queue (public)
 export const joinQueue = async (phoneNumber, serviceId) => {
   const response = await api.post('/join/', {
     phone_number: phoneNumber,
@@ -9,13 +9,13 @@ export const joinQueue = async (phoneNumber, serviceId) => {
   return response.data;
 };
 
-// Get queue status
+// Get queue status (public)
 export const getQueueStatus = async (queueId) => {
   const response = await api.get(`/queue/status/${queueId}/`);
   return response.data;
 };
 
-// Submit feedback
+// Submit feedback (public)
 export const submitFeedback = async (queueId, rating, message) => {
   const response = await api.post('/feedback/', {
     queue_id: queueId,
@@ -25,9 +25,8 @@ export const submitFeedback = async (queueId, rating, message) => {
   return response.data;
 };
 
-// Get services list
+// Get services (public endpoint - no auth needed)
 export const getServices = async () => {
-  // Using admin endpoint (public for now)
-  const response = await api.get('/admin/services/');
+  const response = await api.get('/public/services/');
   return response.data;
 };

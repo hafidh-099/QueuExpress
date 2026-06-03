@@ -1,22 +1,11 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, View, Text } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import QueueStatusScreen from '../screens/QueueStatusScreen';
 import ScanQRScreen from '../screens/ScanQRScreen';
-
-// Temporary placeholders for other screens
-const FeedbackScreen = () => (
-  <View style={styles.placeholder}>
-    <Text>Feedback Screen - Coming Soon</Text>
-  </View>
-);
-
-const SettingsScreen = () => (
-  <View style={styles.placeholder}>
-    <Text>Settings Screen - Coming Soon</Text>
-  </View>
-);
+import FeedbackScreen from '../screens/FeedbackScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,6 +15,7 @@ const MainTabs = () => {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
+          
           if (route.name === 'Status') {
             iconName = focused ? 'timer' : 'timer-outline';
           } else if (route.name === 'Scan') {
@@ -35,37 +25,57 @@ const MainTabs = () => {
           } else if (route.name === 'Settings') {
             iconName = focused ? 'settings' : 'settings-outline';
           }
-          return <Icon name={iconName} size={size} color={color} />;
+          
+          return <Ionicons name={iconName} size={28} color={color} />;
         },
         tabBarActiveTintColor: '#0099CC',
-        tabBarInactiveTintColor: '#64748B',
-        tabBarStyle: styles.tabBar,
-        headerShown: false, // Hide header completely, we'll add logo in each screen
+        tabBarInactiveTintColor: '#94A3B8',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginBottom: 4,
+        },
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E2E8F0',
+          borderTopWidth: 1,
+          height: 65,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        headerShown: false,
       })}
     >
-      <Tab.Screen name="Status" component={QueueStatusScreen} />
-      <Tab.Screen name="Scan" component={ScanQRScreen} />
-      <Tab.Screen name="Feedback" component={FeedbackScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen 
+        name="Status" 
+        component={QueueStatusScreen}
+        options={{
+          tabBarLabel: 'Queue',
+        }}
+      />
+      <Tab.Screen 
+        name="Scan" 
+        component={ScanQRScreen}
+        options={{
+          tabBarLabel: 'Scan',
+        }}
+      />
+      <Tab.Screen 
+        name="Feedback" 
+        component={FeedbackScreen}
+        options={{
+          tabBarLabel: 'Feedback',
+        }}
+      />
+      <Tab.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: 'Settings',
+        }}
+      />
     </Tab.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: '#FFFFFF',
-    borderTopColor: '#E2E8F0',
-    borderTopWidth: 1,
-    height: 60,
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-});
 
 export default MainTabs;
