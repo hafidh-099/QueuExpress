@@ -153,7 +153,7 @@ const QueueControl = () => {
         <div className="bg-gradient-to-r from-secondary to-secondary/80 rounded-2xl p-6 text-white">
           <div className="flex items-center gap-2 mb-2">
             <FaUsers className="text-2xl" />
-            <h3 className="text-sm font-medium opacity-90">Next Queue</h3>
+            <h3 className="text-sm font-medium opacity-90">Next In Line</h3>
           </div>
           <p className="text-4xl font-bold">{nextQueue?.queue_number || '-'}</p>
           <p className="text-sm opacity-80 mt-1">Next to call</p>

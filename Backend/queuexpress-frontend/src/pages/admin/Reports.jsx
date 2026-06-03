@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   FaSpinner, 
@@ -9,19 +9,32 @@ import {
   FaUserCheck,
   FaStar,
   FaChartLine,
-  FaPercentage
+  FaPercentage,
+  FaHourglassHalf
 } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import api from '../../api/axios';
 
 const Reports = () => {
   const [exporting, setExporting] = React.useState(false);
+  const [dashboardStats, setDashboardStats] = useState(null);
 
   // Fetch dashboard stats
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-report'],
     queryFn: async () => {
       const response = await api.get('/admin/report/');
+      return response.data;
+    },
+    refetchInterval: 30000,
+  });
+
+  // Fetch dashboard stats with response time
+  const { data: dashboardStatsData, isLoading: dashboardLoading } = useQuery({
+    queryKey: ['admin-dashboard-stats'],
+    queryFn: async () => {
+      const response = await api.get('/admin/dashboard-stats/');
+      setDashboardStats(response.data.stats);
       return response.data;
     },
     refetchInterval: 30000,
@@ -36,7 +49,7 @@ const Reports = () => {
     },
   });
 
-  // Fetch all staff for report (for analytics only)
+  // Fetch all staff for report
   const { data: staffData, isLoading: staffLoading } = useQuery({
     queryKey: ['admin-staff'],
     queryFn: async () => {
@@ -45,7 +58,7 @@ const Reports = () => {
     },
   });
 
-  // Fetch all services for report (for analytics only)
+  // Fetch all services for report
   const { data: servicesData, isLoading: servicesLoading } = useQuery({
     queryKey: ['admin-services'],
     queryFn: async () => {
@@ -54,7 +67,7 @@ const Reports = () => {
     },
   });
 
-  const isLoading = statsLoading || feedbackLoading || staffLoading || servicesLoading;
+  const isLoading = statsLoading || feedbackLoading || staffLoading || servicesLoading || dashboardLoading;
 
   // Calculate analytics
   const totalCustomers = (statsData?.total_served || 0) + (statsData?.total_waiting || 0) + (statsData?.total_skipped || 0);
@@ -65,6 +78,8 @@ const Reports = () => {
   const averageRating = feedbackData && feedbackData.length > 0
     ? (feedbackData.reduce((sum, f) => sum + f.rating, 0) / feedbackData.length).toFixed(1)
     : 0;
+  
+  const avgResponseTime = dashboardStats?.avg_response_time_minutes || 0;
   
   const ratingDistribution = {
     5: feedbackData?.filter(f => f.rating === 5).length || 0,
@@ -78,7 +93,6 @@ const Reports = () => {
   const exportToExcel = () => {
     setExporting(true);
     
-    // Prepare analytics data
     const analyticsData = [
       { Metric: 'Total Served Customers', Value: statsData?.total_served || 0 },
       { Metric: 'Waiting Customers', Value: statsData?.total_waiting || 0 },
@@ -86,6 +100,7 @@ const Reports = () => {
       { Metric: 'Total Customers', Value: totalCustomers },
       { Metric: 'Service Completion Rate', Value: `${completionRate}%` },
       { Metric: 'Average Customer Rating', Value: `${averageRating} / 5.0` },
+      { Metric: 'Average Response Time', Value: `${avgResponseTime} minutes` },
       { Metric: 'Total Staff Members', Value: staffData?.length || 0 },
       { Metric: 'Total Services Offered', Value: servicesData?.length || 0 },
       { Metric: 'Total Feedback Received', Value: feedbackData?.length || 0 },
@@ -100,18 +115,30 @@ const Reports = () => {
       { Rating: '1 Star', Count: ratingDistribution[1], Percentage: feedbackData?.length ? ((ratingDistribution[1] / feedbackData.length) * 100).toFixed(1) : 0 },
     ];
     
-    // Create workbook
+    const staffSheetData = staffData?.map(staff => ({
+      'Full Name': staff.full_name || staff.username,
+      'Work ID': staff.work_id,
+      'Username': staff.username,
+      'Status': 'Active',
+    })) || [];
+    
+    const servicesSheetData = servicesData?.map(service => ({
+      'Service ID': service.service_id,
+      'Service Name': service.service_name,
+    })) || [];
+    
     const wb = XLSX.utils.book_new();
     
-    // Add sheets
     const analyticsWs = XLSX.utils.json_to_sheet(analyticsData);
     const ratingWs = XLSX.utils.json_to_sheet(ratingDistributionData);
+    const staffWs = XLSX.utils.json_to_sheet(staffSheetData);
+    const servicesWs = XLSX.utils.json_to_sheet(servicesSheetData);
     
-    // Append sheets to workbook
     XLSX.utils.book_append_sheet(wb, analyticsWs, 'Analytics Summary');
     XLSX.utils.book_append_sheet(wb, ratingWs, 'Rating Distribution');
+    XLSX.utils.book_append_sheet(wb, staffWs, 'Staff Members');
+    XLSX.utils.book_append_sheet(wb, servicesWs, 'Services');
     
-    // Save file
     XLSX.writeFile(wb, `queuexpress_analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
     setExporting(false);
   };
@@ -139,8 +166,8 @@ const Reports = () => {
         </div>
       ) : (
         <>
-          {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Key Metrics Cards - Including Avg Response Time */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
                 <div className="bg-green-100 p-3 rounded-xl">
@@ -149,7 +176,6 @@ const Reports = () => {
               </div>
               <h3 className="text-gray-500 text-sm font-medium">Total Served</h3>
               <p className="text-3xl font-bold text-dark mt-1">{statsData?.total_served || 0}</p>
-              <p className="text-xs text-green-600 mt-2">Completed Services</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
@@ -160,7 +186,6 @@ const Reports = () => {
               </div>
               <h3 className="text-gray-500 text-sm font-medium">Currently Waiting</h3>
               <p className="text-3xl font-bold text-dark mt-1">{statsData?.total_waiting || 0}</p>
-              <p className="text-xs text-yellow-600 mt-2">In Queue</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
@@ -171,7 +196,6 @@ const Reports = () => {
               </div>
               <h3 className="text-gray-500 text-sm font-medium">Skipped</h3>
               <p className="text-3xl font-bold text-dark mt-1">{statsData?.total_skipped || 0}</p>
-              <p className="text-xs text-red-600 mt-2">No-show / Cancelled</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
@@ -182,11 +206,20 @@ const Reports = () => {
               </div>
               <h3 className="text-gray-500 text-sm font-medium">Completion Rate</h3>
               <p className="text-3xl font-bold text-dark mt-1">{completionRate}%</p>
-              <p className="text-xs text-blue-600 mt-2">Service Success Rate</p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-purple-100 p-3 rounded-xl">
+                  <FaHourglassHalf className="text-2xl text-purple-600" />
+                </div>
+              </div>
+              <h3 className="text-gray-500 text-sm font-medium">Avg Response Time</h3>
+              <p className="text-3xl font-bold text-dark mt-1">{avgResponseTime} <span className="text-lg">min</span></p>
             </div>
           </div>
 
-          {/* Customer Satisfaction & Quick Stats Row */}
+          {/* Customer Satisfaction Card Only */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Customer Satisfaction Card */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -231,7 +264,7 @@ const Reports = () => {
               </div>
             </div>
 
-            {/* Quick Stats Card */}
+            {/* Quick Statistics Card */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="bg-primary/10 p-2 rounded-lg">
