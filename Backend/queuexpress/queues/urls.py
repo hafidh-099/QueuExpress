@@ -6,6 +6,7 @@ urlpatterns = [
     path('join/', views.join_queue, name='join_queue'),
     path('queue/status/<int:queue_id>/', views.queue_status, name='queue_status'),
     path('feedback/', views.create_feedback, name='create_feedback'),
+    path('public/services/', views.public_services, name='public_services'),
     
     # Staff APIs
     path('staff/call-next/', views.call_next, name='call_next'),

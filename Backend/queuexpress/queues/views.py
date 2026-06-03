@@ -154,6 +154,17 @@ def create_feedback(request):
     
     return Response(response_data, status=status.HTTP_201_CREATED)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Public access - no authentication required
+def public_services(request):
+    """
+    Get all services (public endpoint for customers)
+    GET /api/public/services/
+    """
+    services = Service.objects.all()
+    serializer = ServiceSerializer(services, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 # ==================== STAFF APIs (JWT Required, role=staff) ====================
 
 def is_staff(user):
@@ -894,3 +905,4 @@ def admin_all_queues(request):
         'total': all_queues.count(),
         'queues': queues_data
     }, status=status.HTTP_200_OK)
+    
