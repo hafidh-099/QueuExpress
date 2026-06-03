@@ -65,6 +65,8 @@ class Queue(models.Model):
     phone_number = models.CharField(max_length=15)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='waiting')
     created_at = models.DateTimeField(auto_now_add=True)
+    called_at = models.DateTimeField(null=True, blank=True, help_text="Time when customer was called")
+    served_at = models.DateTimeField(null=True, blank=True, help_text="Time when customer was served")
     served_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 

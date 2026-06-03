@@ -185,15 +185,17 @@ def call_next(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Update status to 'called'
+    # Update status to 'called' and record called time
     next_queue.status = 'called'
+    next_queue.called_at = timezone.now()  # Track when called
     next_queue.save()
     
     response_data = {
         'queue_id': next_queue.queue_id,
         'queue_number': next_queue.queue_number,
         'phone_number': next_queue.phone_number,
-        'service_name': next_queue.service.service_name
+        'service_name': next_queue.service.service_name,
+        'called_at': next_queue.called_at  # Include in response
     }
     
     return Response(response_data, status=status.HTTP_200_OK)
@@ -228,12 +230,21 @@ def serve_queue(request, queue_id):
     
     queue.status = 'served'
     queue.served_by = request.user
+    queue.served_at = timezone.now()  # Track when served
     queue.save()
+    
+    # Calculate wait time (time between called and served)
+    wait_time = None
+    if queue.called_at and queue.served_at:
+        wait_time = (queue.served_at - queue.called_at).total_seconds() / 60  # in minutes
     
     return Response({
         'message': 'Queue marked as served',
         'queue_id': queue.queue_id,
-        'queue_number': queue.queue_number
+        'queue_number': queue.queue_number,
+        'called_at': queue.called_at,
+        'served_at': queue.served_at,
+        'wait_time_minutes': round(wait_time, 1) if wait_time else None
     }, status=status.HTTP_200_OK)
 
 
@@ -575,13 +586,30 @@ def admin_dashboard_stats(request):
             status=status.HTTP_403_FORBIDDEN
         )
     
-    # Get stats
+    from django.db.models import Avg, F, ExpressionWrapper, fields
+    from django.db.models.functions import ExtractHour
+    
+    # Get basic stats
     total_served = Queue.objects.filter(status='served').count()
     total_waiting = Queue.objects.filter(status__in=['waiting', 'called']).count()
     total_skipped = Queue.objects.filter(status='skipped').count()
     total_staff = User.objects.filter(role='staff').count()
     
-    # Get recent queues (last 10)
+    # Calculate average response time (time from called to served)
+    avg_response_time = Queue.objects.filter(
+        status='served',
+        called_at__isnull=False,
+        served_at__isnull=False
+    ).annotate(
+        response_time=ExpressionWrapper(
+            F('served_at') - F('called_at'),
+            output_field=fields.DurationField()
+        )
+    ).aggregate(avg=Avg('response_time'))['avg']
+    
+    avg_response_minutes = round(avg_response_time.total_seconds() / 60, 1) if avg_response_time else 0
+    
+    # Get recent queues with timestamps
     recent_queues = Queue.objects.all().order_by('-created_at')[:10]
     
     recent_queues_data = []
@@ -594,6 +622,8 @@ def admin_dashboard_stats(request):
             'batch_number': queue.batch.batch_number,
             'status': queue.status,
             'created_at': queue.created_at,
+            'called_at': queue.called_at,
+            'served_at': queue.served_at,
         })
     
     return Response({
@@ -602,6 +632,7 @@ def admin_dashboard_stats(request):
             'total_waiting': total_waiting,
             'total_skipped': total_skipped,
             'total_staff': total_staff,
+            'avg_response_time_minutes': avg_response_minutes,
         },
         'recent_queues': recent_queues_data
     })
@@ -855,6 +886,8 @@ def admin_all_queues(request):
             'batch_number': queue.batch.batch_number,
             'status': queue.status,
             'created_at': queue.created_at,
+            'called_at': queue.called_at,  # Add this
+            'served_at': queue.served_at,  # Add this
         })
     
     return Response({

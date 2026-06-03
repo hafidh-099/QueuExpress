@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FaPhoneAlt, FaUserCheck, FaBan, FaSpinner, FaUsers, FaClock } from 'react-icons/fa';
+import { FaPhoneAlt, FaUserCheck, FaBan, FaSpinner, FaUsers, FaClock, FaCalendarAlt } from 'react-icons/fa';
 import api from '../../api/axios';
 
 const QueueControl = () => {
@@ -24,7 +24,8 @@ const QueueControl = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      setMessage({ type: 'success', text: `Called Queue #${data.queue_number} - ${data.phone_number}` });
+      const calledTime = new Date(data.called_at).toLocaleTimeString();
+      setMessage({ type: 'success', text: `Called Queue #${data.queue_number} - ${data.phone_number} at ${calledTime}` });
       queryClient.invalidateQueries(['staff-queue-list']);
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     },
@@ -40,8 +41,12 @@ const QueueControl = () => {
       const response = await api.post(`/staff/serve/${queueId}/`);
       return response.data;
     },
-    onSuccess: (_, queueId) => {
-      setMessage({ type: 'success', text: `Queue #${queueId} marked as served` });
+    onSuccess: (data, queueId) => {
+      const waitTime = data.wait_time_minutes;
+      setMessage({ 
+        type: 'success', 
+        text: `Queue #${queueId} marked as served. Wait time: ${waitTime} minutes` 
+      });
       queryClient.invalidateQueries(['staff-queue-list']);
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     },
@@ -88,6 +93,16 @@ const QueueControl = () => {
     }
   };
 
+  const formatTime = (datetime) => {
+    if (!datetime) return '-';
+    return new Date(datetime).toLocaleTimeString();
+  };
+
+  const formatDate = (datetime) => {
+    if (!datetime) return '-';
+    return new Date(datetime).toLocaleDateString();
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -101,7 +116,7 @@ const QueueControl = () => {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-dark">Queue Control</h2>
-        <p className="text-gray-500 mt-1">Manage customer queue operations</p>
+        <p className="text-gray-500 mt-1">Manage customer queue operations with time tracking</p>
       </div>
 
       {/* Message Alert */}
@@ -177,17 +192,24 @@ const QueueControl = () => {
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Queue #</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Service</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Called At</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {calledQueues.map((queue) => (
-                  <tr key={queue.queue_id} className="border-b border-gray-100">
+                  <tr key={queue.queue_id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <span className="font-bold text-secondary text-lg">#{queue.queue_number}</span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">{queue.phone_number}</td>
                     <td className="px-6 py-4 text-dark">{queue.service_name}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-600">{formatTime(queue.called_at)}</span>
+                        <span className="text-xs text-gray-400">{formatDate(queue.called_at)}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
                         <button
@@ -228,17 +250,24 @@ const QueueControl = () => {
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Service</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Batch</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Joined At</th>
                 </tr>
               </thead>
               <tbody>
                 {waitingQueues.slice(0, 5).map((queue) => (
-                  <tr key={queue.queue_id} className="border-b border-gray-100">
+                  <tr key={queue.queue_id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <span className="font-bold text-secondary text-lg">#{queue.queue_number}</span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">{queue.phone_number}</td>
                     <td className="px-6 py-4 text-dark">{queue.service_name}</td>
                     <td className="px-6 py-4 text-gray-600">{queue.batch_number}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-600">{formatTime(queue.created_at)}</span>
+                        <span className="text-xs text-gray-400">{formatDate(queue.created_at)}</span>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -246,8 +275,15 @@ const QueueControl = () => {
           </div>
         </div>
       )}
+
+      {/* Performance Note */}
+      <div className="bg-gray-50 rounded-xl p-4 text-center">
+        <p className="text-xs text-gray-500">
+            {/* Response time is calculated from "Called" to "Served" status */}
+        </p>
+      </div>
     </div>
   );
 };
 
-export default QueueControl;
+export default QueueControl;  

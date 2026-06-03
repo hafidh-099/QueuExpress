@@ -173,7 +173,7 @@ const StaffLogin = () => {
                     Verifying...
                   </>
                 ) : (
-                  "Login as Staff"
+                  "Login"
                 )}
               </button>
             </form>

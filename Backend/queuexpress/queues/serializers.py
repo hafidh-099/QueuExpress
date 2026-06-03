@@ -107,9 +107,8 @@ class StaffQueueListSerializer(serializers.ModelSerializer):
         model = Queue
         fields = [
             'queue_id', 'queue_number', 'batch_number', 'service_name',
-            'phone_number', 'status', 'created_at'
+            'phone_number', 'status', 'created_at', 'called_at', 'served_at'
         ]
-
 
 class AdminReportSerializer(serializers.Serializer):
     """Serializer for admin report"""

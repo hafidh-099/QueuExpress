@@ -165,7 +165,7 @@ const AdminLogin = () => {
                     Verifying...
                   </>
                 ) : (
-                  "Login as Admin"
+                  "Login"
                 )}
               </button>
             </form>

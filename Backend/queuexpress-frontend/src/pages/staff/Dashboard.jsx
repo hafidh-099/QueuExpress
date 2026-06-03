@@ -37,7 +37,7 @@ const StaffDashboard = () => {
         <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 text-white">
           <div className="flex items-center gap-2 mb-2">
             <FaChartLine className="text-2xl" />
-            <h3 className="text-sm font-medium opacity-90">Current Queue</h3>
+            <h3 className="text-sm font-medium opacity-90">Next in line</h3>
           </div>
           <p className="text-4xl font-bold">{currentQueue}</p>
           <p className="text-sm opacity-80 mt-1">Next customer to call</p>
