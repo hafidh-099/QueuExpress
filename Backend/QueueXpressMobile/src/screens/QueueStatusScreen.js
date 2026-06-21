@@ -9,6 +9,7 @@ import {
   Alert,
   Vibration,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -48,15 +49,38 @@ const QueueStatusScreen = () => {
     onSuccess: (statusData) => {
       console.log('Queue status data:', statusData);
       
+      // Check if status has changed
       if (previousStatus && previousStatus !== statusData.status) {
-        if (statusData.status === 'called') {
-          Vibration.vibrate([500, 200, 500]);
-        } else if (statusData.status === 'served') {
-          Vibration.vibrate([300, 100, 300, 100, 500]);
-        } else if (statusData.status === 'skipped') {
-          Vibration.vibrate([200, 100, 200]);
+        console.log('Status changed from', previousStatus, 'to', statusData.status);
+        
+        // Trigger vibration based on new status
+        try {
+          switch (statusData.status) {
+            case 'called':
+              // Two long vibrations - "You've been called!"
+              Vibration.vibrate([500, 200, 500]);
+              break;
+            case 'served':
+              // Happy pattern - "Service completed!"
+              Vibration.vibrate([300, 100, 300, 100, 500]);
+              break;
+            case 'skipped':
+              // Two short vibrations - "You were skipped"
+              Vibration.vibrate([200, 100, 200]);
+              break;
+            case 'waiting':
+              // Short single vibration
+              Vibration.vibrate(100);
+              break;
+            default:
+              break;
+          }
+        } catch (error) {
+          console.error('Vibration error:', error);
         }
       }
+      
+      // Update previous status
       setPreviousStatus(statusData.status);
     },
     onError: (err) => {
@@ -218,7 +242,7 @@ const QueueStatusScreen = () => {
 
         {/* Queue Number - Extra Large */}
         <Text style={[styles.queueNumber, { color: colors.primary }]}>
-          {data?.queue_number || queueNumber || '-'}
+          # {data?.queue_number || queueNumber || '-'}
         </Text>
 
         {/* People Ahead */}
