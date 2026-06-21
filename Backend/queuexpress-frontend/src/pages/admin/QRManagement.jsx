@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaQrcode, FaDownload, FaPrint, FaCopy, FaShare, FaCheck, FaEdit } from 'react-icons/fa';
+import { FaQrcode, FaDownload, FaPrint, FaCopy, FaShare, FaCheck, FaEdit, FaLink } from 'react-icons/fa';
 
 const QRManagement = () => {
   const [qrValue, setQrValue] = useState('');
@@ -129,6 +129,19 @@ const QRManagement = () => {
             width: 300px;
             height: 300px;
           }
+          .url-container {
+            margin: 10px 0 20px 0;
+            padding: 10px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            display: inline-block;
+          }
+          .url-text {
+            font-family: monospace;
+            font-size: 14px;
+            color: #0099CC;
+            word-break: break-all;
+          }
           .instructions {
             text-align: left;
             background: #f5f5f5;
@@ -173,10 +186,14 @@ const QRManagement = () => {
           <div class="qr-container">
             <img src="${qrImageUrl}" alt="QR Code" />
           </div>
+          <div class="url-container">
+            <span class="url-text">${qrValue}</span>
+          </div>
           <div class="instructions">
             <h3>How to join the queue:</h3>
             <ol>
               <li>Scan this QR code with your phone camera</li>
+              <li>Or visit the URL above on any device</li>
               <li>Enter your phone number</li>
               <li>Select a service type</li>
               <li>Get your queue number instantly</li>
@@ -351,6 +368,26 @@ const QRManagement = () => {
                   />
                 </div>
               </div>
+
+              {/* URL Display Below QR Code - NEW */}
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <FaLink className="text-blue-500 dark:text-blue-400 flex-shrink-0" />
+                    <span className="text-xs font-mono text-blue-600 dark:text-blue-400 truncate">
+                      {qrValue}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className="flex-shrink-0 px-3 py-1 text-xs bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors flex items-center gap-1"
+                  >
+                    {copied ? <FaCheck size={12} /> : <FaCopy size={12} />}
+                    {copied ? 'Copied!' : 'Copy URL'}
+                  </button>
+                </div>
+               
+              </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -381,22 +418,22 @@ const QRManagement = () => {
                 </button>
               </div>
               
-              <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                <p className="text-green-700 text-sm text-center">
+              <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <p className="text-green-700 dark:text-green-400 text-sm text-center">
                   ✓ QR Code is active and ready to use
                 </p>
-                <p className="text-xs text-gray-500 text-center mt-1 break-all">
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1 break-all">
                   URL: {qrValue}
                 </p>
               </div>
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                <FaQrcode className="text-4xl text-gray-300" />
+              <div className="w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
+                <FaQrcode className="text-4xl text-gray-300 dark:text-gray-600" />
               </div>
-              <p className="text-gray-400">Click "Generate QR Code" to create</p>
-              <p className="text-sm text-gray-400 mt-1">QR code for customer queue joining</p>
+              <p className="text-gray-400 dark:text-gray-500">Click "Generate QR Code" to create</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">QR code for customer queue joining</p>
             </div>
           )}
         </div>
@@ -404,44 +441,44 @@ const QRManagement = () => {
 
       {/* Instructions Card */}
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-dark mb-3">How to Use</h3>
+        <h3 className="text-lg font-semibold text-dark dark:text-gray-200 mb-3">How to Use</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
               1
             </div>
-            <p className="font-medium text-dark">Configure IP</p>
-            <p className="text-sm text-gray-500">Enter your server IP address</p>
+            <p className="font-medium text-dark dark:text-gray-200">Configure IP</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Enter your server IP address</p>
           </div>
           <div className="text-center">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
               2
             </div>
-            <p className="font-medium text-dark">Generate QR</p>
-            <p className="text-sm text-gray-500">Create QR code for queue joining page</p>
+            <p className="font-medium text-dark dark:text-gray-200">Generate QR</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Create QR code for queue joining page</p>
           </div>
           <div className="text-center">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
               3
             </div>
-            <p className="font-medium text-dark">Download & Print</p>
-            <p className="text-sm text-gray-500">Save PNG or print poster for display</p>
+            <p className="font-medium text-dark dark:text-gray-200">Download & Print</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Save PNG or print poster for display</p>
           </div>
         </div>
       </div>
 
       {/* Printable Poster Preview */}
       {qrValue && (
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-dark mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-dark dark:text-gray-200 mb-4 flex items-center gap-2">
             <FaPrint className="text-primary" />
             Printable Poster Preview
           </h3>
           
-          <div className="border-2 border-primary rounded-2xl p-8 text-center max-w-2xl mx-auto">
+          <div className="border-2 border-primary rounded-2xl p-8 text-center max-w-2xl mx-auto dark:bg-gray-900">
             <h1 className="text-3xl font-bold text-primary mb-2">QueueXpress</h1>
-            <h2 className="text-xl font-semibold text-dark mb-2">Join Queue Digitally</h2>
-            <p className="text-gray-600 mb-6">Scan to get your queue number</p>
+            <h2 className="text-xl font-semibold text-dark dark:text-gray-200 mb-2">Join Queue Digitally</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">Scan to get your queue number</p>
             
             <div className="flex justify-center mb-6">
               <img
@@ -450,19 +487,27 @@ const QRManagement = () => {
                 className="w-48 h-48"
               />
             </div>
+
+            {/* URL on poster preview */}
+            <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg inline-block">
+              <span className="text-xs font-mono text-blue-600 dark:text-blue-400">
+                {qrValue}
+              </span>
+            </div>
             
-            <div className="bg-gray-50 rounded-xl p-4 text-left max-w-md mx-auto">
-              <h3 className="font-semibold text-dark mb-2">How to join the queue:</h3>
-              <ol className="space-y-1 text-sm text-gray-600">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-left max-w-md mx-auto">
+              <h3 className="font-semibold text-dark dark:text-gray-200 mb-2">How to join the queue:</h3>
+              <ol className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                 <li>1. Scan this QR code with your phone camera</li>
-                <li>2. Enter your phone number</li>
-                <li>3. Select a service type</li>
-                <li>4. Get your queue number instantly</li>
-                <li>5. Wait for your turn to be called</li>
+                <li>2. Or visit the URL above on any device</li>
+                <li>3. Enter your phone number</li>
+                <li>4. Select a service type</li>
+                <li>5. Get your queue number instantly</li>
+                <li>6. Wait for your turn to be called</li>
               </ol>
             </div>
             
-            <p className="text-xs text-gray-400 mt-4">QueueXpress Queue Management System</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">QueueXpress Queue Management System</p>
           </div>
           
           <div className="text-center mt-4">
