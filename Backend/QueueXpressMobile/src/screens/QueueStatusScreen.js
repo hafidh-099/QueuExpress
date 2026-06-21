@@ -7,22 +7,28 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  Vibration,
+  Dimensions,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import Logo from '../components/Logo';
 import { getQueueStatus } from '../api/queue';
 import { getQueueData, clearQueueData } from '../storage/storage';
-import { getColors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
+
+const { width } = Dimensions.get('window');
 
 const QueueStatusScreen = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
   const [queueId, setQueueId] = useState(null);
   const [queueNumber, setQueueNumber] = useState(null);
+  const [previousStatus, setPreviousStatus] = useState(null);
 
   useEffect(() => {
     loadSavedData();
@@ -38,12 +44,34 @@ const QueueStatusScreen = () => {
     queryKey: ['queueStatus', queueId],
     queryFn: () => getQueueStatus(queueId),
     enabled: !!queueId,
-    refetchInterval: 5000,
+    refetchInterval: 3000,
     onSuccess: (statusData) => {
       console.log('Queue status data:', statusData);
+      
+      if (previousStatus && previousStatus !== statusData.status) {
+        if (statusData.status === 'called') {
+          Vibration.vibrate([500, 200, 500]);
+        } else if (statusData.status === 'served') {
+          Vibration.vibrate([300, 100, 300, 100, 500]);
+        } else if (statusData.status === 'skipped') {
+          Vibration.vibrate([200, 100, 200]);
+        }
+      }
+      setPreviousStatus(statusData.status);
     },
     onError: (err) => {
       if (err?.response?.status === 404) {
+        Alert.alert(
+          t('status.queueNotFound'),
+          t('status.queueEndedMessage'),
+          [
+            {
+              text: t('status.joinNewQueue'),
+              onPress: () => navigation.navigate('MainTabs', { screen: 'Scan' }),
+            },
+            { text: t('alerts.ok') },
+          ]
+        );
         clearQueueData();
         setQueueId(null);
         setQueueNumber(null);
@@ -77,7 +105,7 @@ const QueueStatusScreen = () => {
     }
   };
 
-  const getStatusIonicons = (status) => {
+  const getStatusIcon = (status) => {
     switch (status) {
       case 'waiting': return 'time-outline';
       case 'called': return 'call-outline';
@@ -93,7 +121,9 @@ const QueueStatusScreen = () => {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Logo size="small" showText={false} />
         <View style={styles.emptyContainer}>
-          <Ionicons name="scan-outline" size={80} color={colors.textSecondary} />
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="scan-outline" size={80} color={colors.primary} />
+          </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
             {t('status.noQueue')}
           </Text>
@@ -103,7 +133,7 @@ const QueueStatusScreen = () => {
           <TouchableOpacity
             style={styles.scanButton}
             onPress={() => {
-              Alert.alert('Info', 'Please go to Scan tab to join a queue');
+              navigation.navigate('MainTabs', { screen: 'Scan' });
             }}
           >
             <Ionicons name="qr-code-outline" size={20} color="#FFFFFF" />
@@ -147,7 +177,10 @@ const QueueStatusScreen = () => {
     );
   }
 
-  // Display queue status
+  const statusColor = getStatusColor(data?.status);
+  const statusText = getStatusText(data?.status);
+  const statusIcon = getStatusIcon(data?.status);
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -158,115 +191,102 @@ const QueueStatusScreen = () => {
     >
       <Logo size="small" showText={false} />
 
-      {/* Queue Number Card */}
-      <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.dark }]}>
-        <View style={styles.cardHeader}>
-          <Ionicons name="timer-outline" size={24} color={colors.primary} />
-          <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
-            {t('status.queueNumber')}
+      {/* Main Card - Large Receipt Style */}
+      <View style={[styles.mainCard, { 
+        backgroundColor: colors.surface,
+        shadowColor: colors.dark,
+        borderColor: statusColor + '40',
+      }]}>
+        
+        {/* Queue Info - Top */}
+        <Text style={[styles.cardTitle, { color: colors.text }]}>
+          {t('status.queueInfo')}
+        </Text>
+
+        {/* Status - Below with spacing */}
+        <View style={styles.statusContainer}>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+            <Ionicons name={statusIcon} size={18} color={statusColor} />
+            <Text style={[styles.statusBadgeText, { color: statusColor }]}>
+              {statusText}
+            </Text>
+          </View>
+        </View>
+
+        {/* Spacer */}
+        <View style={styles.spacer} />
+
+        {/* Queue Number - Extra Large */}
+        <Text style={[styles.queueNumber, { color: colors.primary }]}>
+          {data?.queue_number || queueNumber || '-'}
+        </Text>
+
+        {/* People Ahead */}
+        <View style={styles.peopleContainer}>
+          <Ionicons name="people-outline" size={22} color={colors.warning} />
+          <Text style={[styles.peopleText, { color: colors.textSecondary }]}>
+            {data?.people_ahead !== undefined ? data.people_ahead : '-'} {t('status.peopleAhead')}
           </Text>
         </View>
-        <Text style={[styles.queueNumber, { color: colors.primary }]}>
-          #{data?.queue_number || queueNumber || '-'}
-        </Text>
-      </View>
 
-      {/* Batch Number and Status Row */}
-      <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.dark }]}>
-        <View style={styles.row}>
-          <View style={styles.halfColumn}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="layers-outline" size={20} color={colors.primary} />
-              <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
-                {t('status.batchNumber')}
-              </Text>
-            </View>
-            <Text style={[styles.cardValue, { color: colors.text }]}>
+        {/* Divider */}
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        {/* Bottom Row */}
+        <View style={styles.bottomRow}>
+          <View style={styles.bottomItem}>
+            <Ionicons name="time-outline" size={22} color={colors.primary} />
+            <Text style={[styles.bottomLabel, { color: colors.textSecondary }]}>
+              {t('status.estimatedTime')}
+            </Text>
+            <Text style={[styles.bottomValue, { color: colors.primary }]}>
+              {data?.estimated_time !== undefined ? data.estimated_time : '-'} {t('status.minutes')}
+            </Text>
+          </View>
+          
+          <View style={[styles.bottomDivider, { backgroundColor: colors.border }]} />
+          
+          <View style={styles.bottomItem}>
+            <Ionicons name="layers-outline" size={22} color={colors.primary} />
+            <Text style={[styles.bottomLabel, { color: colors.textSecondary }]}>
+              {t('status.batchNumber')}
+            </Text>
+            <Text style={[styles.bottomValue, { color: colors.primary }]}>
               {data?.batch_number || '-'}
             </Text>
           </View>
-          <View style={styles.halfColumn}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-              <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
-                {t('status.status')}
-              </Text>
-            </View>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(data?.status) + '20' }]}>
-              <Ionicons name={getStatusIonicons(data?.status)} size={16} color={getStatusColor(data?.status)} />
-              <Text style={[styles.statusText, { color: getStatusColor(data?.status) }]}>
-                {getStatusText(data?.status)}
-              </Text>
-            </View>
-          </View>
         </View>
+
+        {/* Decorative Bottom Line */}
+        <View style={[styles.decorativeLine, { borderColor: statusColor + '30' }]} />
       </View>
 
-      {/* People Ahead Card */}
-      <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.dark }]}>
-        <View style={styles.cardHeader}>
-          <Ionicons name="people-outline" size={24} color={colors.warning} />
-          <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
-            {t('status.peopleAhead')}
-          </Text>
-        </View>
-        <Text style={[styles.largeValue, { color: '#F59E0B' }]}>
-          {data?.people_ahead !== undefined ? data.people_ahead : '-'}
-        </Text>
-        {data?.people_ahead > 0 && (
-          <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-            {data?.people_ahead === 1 
-              ? "You're next in line!" 
-              : `${data.people_ahead} people before you`}
-          </Text>
-        )}
-      </View>
-
-      {/* Estimated Time Card */}
-      <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.dark }]}>
-        <View style={styles.cardHeader}>
-          <Ionicons name="time-outline" size={24} color={colors.secondary} />
-          <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
-            {t('status.estimatedTime')}
-          </Text>
-        </View>
-        <Text style={[styles.largeValue, { color: colors.secondary }]}>
-          {data?.estimated_time !== undefined ? data.estimated_time : '-'} <Text style={styles.smallText}>{t('status.minutes')}</Text>
-        </Text>
-        <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-          Estimated waiting time based on current queue
-        </Text>
-      </View>
-
-      {/* Served Message */}
+      {/* Served Action */}
       {data?.status === 'served' && (
-        <View style={[styles.servedContainer, { backgroundColor: '#22C55E10' }]}>
-          <Ionicons name="checkmark-circle" size={40} color="#22C55E" />
-          <Text style={[styles.servedTitle, { color: '#22C55E' }]}>Service Completed!</Text>
-          <Text style={[styles.servedText, { color: colors.textSecondary }]}>
-            Thank you for using QueueXpress. Please rate your experience in the Feedback tab.
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: '#22C55E15', borderColor: '#22C55E' }]}
+          onPress={() => navigation.navigate('MainTabs', { screen: 'Feedback' })}
+        >
+          <Ionicons name="star-outline" size={22} color="#22C55E" />
+          <Text style={[styles.actionCardText, { color: '#22C55E' }]}>
+            {t('status.rateExperience')}
           </Text>
-        </View>
+          <Ionicons name="chevron-forward-outline" size={18} color="#22C55E" />
+        </TouchableOpacity>
       )}
 
-      {/* Skipped Message */}
+      {/* Skipped Action */}
       {data?.status === 'skipped' && (
-        <View style={[styles.skippedContainer, { backgroundColor: '#EF444410' }]}>
-          <Ionicons name="close-circle" size={40} color="#EF4444" />
-          <Text style={[styles.skippedTitle, { color: '#EF4444' }]}>Queue Skipped</Text>
-          <Text style={[styles.skippedText, { color: colors.textSecondary }]}>
-            Your turn was skipped. You can join a new queue if needed.
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: '#EF444415', borderColor: '#EF4444' }]}
+          onPress={() => navigation.navigate('MainTabs', { screen: 'Scan' })}
+        >
+          <Ionicons name="qr-code-outline" size={22} color="#EF4444" />
+          <Text style={[styles.actionCardText, { color: '#EF4444' }]}>
+            {t('status.joinNewQueue')}
           </Text>
-          <TouchableOpacity
-            style={[styles.joinAgainButton, { backgroundColor: colors.primary }]}
-            onPress={() => {
-              Alert.alert('Info', 'Please go to Scan tab to join a new queue');
-            }}
-          >
-            <Ionicons name="qr-code-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.joinAgainButtonText}>Join New Queue</Text>
-          </TouchableOpacity>
-        </View>
+          <Ionicons name="chevron-forward-outline" size={18} color="#EF4444" />
+        </TouchableOpacity>
       )}
     </ScrollView>
   );
@@ -278,89 +298,154 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 40,
-  },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+  },
+
+  // Main Card
+  mainCard: {
+    width: width - 40,
+    borderRadius: 24,
+    padding: 32,
+    paddingTop: 28,
+    paddingBottom: 28,
+    marginBottom: 16,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+    minHeight: 500,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  statusContainer: {
+    alignItems: 'center',
     marginBottom: 8,
-  },
-  cardLabel: {
-    fontSize: 14,
-  },
-  queueNumber: {
-    fontSize: 48,
-    fontWeight: 'bold',
-  },
-  cardValue: {
-    fontSize: 28,
-    fontWeight: '600',
-  },
-  largeValue: {
-    fontSize: 42,
-    fontWeight: 'bold',
-  },
-  smallText: {
-    fontSize: 18,
-    fontWeight: 'normal',
-  },
-  row: {
-    flexDirection: 'row',
-  },
-  halfColumn: {
-    flex: 1,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    gap: 8,
   },
-  statusText: {
-    fontSize: 14,
+  statusBadgeText: {
+    fontSize: 16,
     fontWeight: '600',
   },
-  hintText: {
-    fontSize: 12,
-    marginTop: 8,
+  spacer: {
+    height: 30,
   },
+  queueNumber: {
+    fontSize: 80,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: 3,
+  },
+  peopleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 28,
+  },
+  peopleText: {
+    fontSize: 17,
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1.5,
+    marginBottom: 24,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  bottomItem: {
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+  },
+  bottomLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  bottomValue: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  bottomDivider: {
+    width: 1,
+    height: 55,
+  },
+  decorativeLine: {
+    marginTop: 24,
+    height: 3,
+    borderWidth: 0,
+    borderRadius: 4,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+  },
+
+  // Action Card
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    gap: 10,
+    width: width - 40,
+  },
+  actionCardText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Empty State
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 50,
+    marginTop: 60,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#0099CC10',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 20,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
-    marginTop: 8,
     marginHorizontal: 40,
+    marginBottom: 24,
   },
   scanButton: {
     flexDirection: 'row',
     backgroundColor: '#0099CC',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    marginTop: 24,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 30,
     gap: 8,
     alignItems: 'center',
   },
@@ -369,10 +454,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+
+  // Loading & Error
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 50,
+    marginTop: 60,
   },
   loadingText: {
     marginTop: 12,
@@ -381,7 +468,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 50,
+    marginTop: 60,
   },
   errorText: {
     fontSize: 16,
@@ -389,59 +476,13 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     backgroundColor: '#0099CC',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 20,
     marginTop: 20,
   },
   retryButtonText: {
     color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  servedContainer: {
-    alignItems: 'center',
-    padding: 24,
-    borderRadius: 20,
-    marginTop: 16,
-  },
-  servedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 12,
-  },
-  servedText: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  skippedContainer: {
-    alignItems: 'center',
-    padding: 24,
-    borderRadius: 20,
-    marginTop: 16,
-  },
-  skippedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 12,
-  },
-  skippedText: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  joinAgainButton: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    marginTop: 20,
-    gap: 8,
-    alignItems: 'center',
-  },
-  joinAgainButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '600',
   },
 });

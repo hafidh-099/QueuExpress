@@ -8,12 +8,13 @@
     "submit": "Submit"
   },
   "tabs": {
-    "status": "Queue Status",
-    "scan": "Scan QR",
+    "status": "Queue",
+    "scan": "Scan",
     "feedback": "Feedback",
     "settings": "Settings"
   },
   "status": {
+    "queueInfo": "Queue Info",
     "title": "Your Queue Status",
     "queueNumber": "Queue Number",
     "batchNumber": "Batch Number",
@@ -27,7 +28,19 @@
     "called": "Called",
     "served": "Served",
     "skipped": "Skipped",
-    "minutes": "min"
+    "minutes": "min",
+    "youAreNext": "You're next in line!",
+    "peopleBeforeYou": "people before you",
+    "pleaseWait": "You're next! Please wait for your turn.",
+    "serviceCompleted": "Service Completed!",
+    "thankYouMessage": "Thank you for using QueueXpress. Please rate your experience in the Feedback tab.",
+    "rateExperience": "Rate Your Experience",
+    "queueSkipped": "Queue Skipped",
+    "skippedMessage": "Your turn was skipped. You can join a new queue if needed.",
+    "joinNewQueue": "Join New Queue",
+    "clearQueue": "Clear Queue (Start New)",
+    "queueNotFound": "Queue Not Found",
+    "queueEndedMessage": "Your queue has ended or does not exist. You can join a new queue."
   },
   "scan": {
     "title": "Scan QR Code",
@@ -48,7 +61,10 @@
     "joinButton": "Join Queue",
     "joining": "Joining...",
     "success": "Successfully joined the queue!",
+    "existingQueue": "You already have an active queue. Showing your current status.",
     "error": "Failed to join queue",
+    "activeQueueFound": "Active Queue Found",
+    "checking": "Checking...",
     "validation": {
       "serviceRequired": "Please select a service",
       "phoneRequired": "Phone number is required",
@@ -66,7 +82,11 @@
     "error": "Failed to submit feedback",
     "validation": {
       "ratingRequired": "Please select a rating"
-    }
+    },
+    "cannotSubmit": "Cannot Submit Feedback",
+    "mustBeServed": "Feedback can only be submitted for completed (served) queues.\n\nPlease join a new queue, get served, then submit your feedback.",
+    "joinQueue": "Join Queue",
+    "infoNote": "You can only submit feedback after your queue has been marked as 'Served'"
   },
   "settings": {
     "title": "Settings",
@@ -87,8 +107,24 @@
     "approaching": "Your turn is approaching",
     "approachingBody": "Please prepare to visit the service center.",
     "almostThere": "Almost there!",
-    "almostThereBody": "Only 5 customers remain before your turn.",
+    "almostThereBody": "Only 5 customers remain before your turn. Please move closer to the service area.",
     "youAreNext": "You are next!",
     "youAreNextBody": "Please proceed to the service counter."
+  },
+  "alerts": {
+    "error": "Error",
+    "success": "Success",
+    "info": "Info",
+    "warning": "Warning",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "activeQueueFound": "Active Queue Found",
+    "activeQueueMessage": "You already have an active queue. You will be redirected to your queue status.",
+    "queueCompleted": "Queue Completed",
+    "queueCleared": "Queue Cleared",
+    "queueClearedMessage": "You can join a new queue.",
+    "joinQueuePrompt": "Please go to Scan tab to join a queue",
+    "noActiveQueue": "No active queue found or error checking"
   }
 }

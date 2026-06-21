@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import Logo from '../components/Logo';
 import { submitFeedback } from '../api/queue';
 import { getQueueData } from '../storage/storage';
-import { getColors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
 
 const FeedbackScreen = () => {
@@ -40,15 +39,23 @@ const FeedbackScreen = () => {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      Alert.alert('Validation Error', t('feedback.validation.ratingRequired'));
+      Alert.alert(t('alerts.error'), t('feedback.validation.ratingRequired'));
       return;
     }
 
     if (!hasQueue || !queueId) {
       Alert.alert(
-        'Cannot Submit Feedback',
-        'You need to join and complete a queue before submitting feedback.',
-        [{ text: 'OK' }]
+        t('feedback.cannotSubmit'),
+        t('feedback.mustBeServed'),
+        [
+          { 
+            text: t('feedback.joinQueue'), 
+            onPress: () => {
+              // Navigate to Scan tab
+            }
+          },
+          { text: t('alerts.ok') }
+        ]
       );
       return;
     }
@@ -57,7 +64,7 @@ const FeedbackScreen = () => {
 
     try {
       await submitFeedback(queueId, rating, message);
-      Alert.alert('Success', t('feedback.success'));
+      Alert.alert(t('alerts.success'), t('feedback.success'));
       setRating(0);
       setMessage('');
     } catch (error) {
@@ -69,15 +76,23 @@ const FeedbackScreen = () => {
         
         if (status === 400 && errorData?.error === 'Feedback can only be given for served queues') {
           Alert.alert(
-            'Cannot Submit Feedback',
-            'Feedback can only be submitted for completed (served) queues.\n\nPlease join a new queue, get served, then submit your feedback.',
-            [{ text: 'OK' }]
+            t('feedback.cannotSubmit'),
+            t('feedback.mustBeServed'),
+            [
+              { 
+                text: t('feedback.joinQueue'), 
+                onPress: () => {
+                  // Navigate to Scan tab
+                }
+              },
+              { text: t('alerts.ok') }
+            ]
           );
         } else {
-          Alert.alert('Error', errorData?.error || t('feedback.error'));
+          Alert.alert(t('alerts.error'), errorData?.error || t('feedback.error'));
         }
       } else {
-        Alert.alert('Error', t('feedback.error'));
+        Alert.alert(t('alerts.error'), t('feedback.error'));
       }
     } finally {
       setLoading(false);
@@ -106,6 +121,7 @@ const FeedbackScreen = () => {
 
       <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.dark }]}>
         <View style={styles.header}>
+          <Ionicons name="star-outline" size={28} color={colors.primary} />
           <Text style={[styles.title, { color: colors.text }]}>{t('feedback.title')}</Text>
         </View>
 
@@ -120,7 +136,7 @@ const FeedbackScreen = () => {
         {/* Message Section */}
         <View style={styles.messageContainer}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {t('feedback.message')}
+            <Ionicons name="chatbubble-outline" size={16} color={colors.textSecondary} /> {t('feedback.message')}
           </Text>
           <TextInput
             style={[
@@ -161,7 +177,7 @@ const FeedbackScreen = () => {
         <View style={[styles.infoContainer, { backgroundColor: colors.primary + '10' }]}>
           <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            You can only submit feedback after your queue has been marked as "Served"
+            {t('feedback.infoNote')}
           </Text>
         </View>
       </View>

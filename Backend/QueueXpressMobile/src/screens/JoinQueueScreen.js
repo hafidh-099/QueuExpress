@@ -15,9 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Logo from '../components/Logo';
-import { joinQueue, getServices } from '../api/queue';
-import { saveQueueData } from '../storage/storage';
-import { getColors } from '../theme/colors';
+import { joinQueue, getServices, getQueueStatus } from '../api/queue';
+import { saveQueueData, getQueueData, clearQueueData } from '../storage/storage';
 import { useTheme } from '../context/ThemeContext';
 
 const JoinQueueScreen = ({ route }) => {
@@ -32,9 +31,11 @@ const JoinQueueScreen = ({ route }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [errors, setErrors] = useState({});
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(true);
 
   useEffect(() => {
     fetchServices();
+    checkExistingActiveQueue();
   }, []);
 
   const fetchServices = async () => {
@@ -43,7 +44,35 @@ const JoinQueueScreen = ({ route }) => {
       setServices(response);
     } catch (error) {
       console.error('Error fetching services:', error);
-      Alert.alert('Error', 'Failed to load services. Please try again.');
+      Alert.alert(t('alerts.error'), t('common.error'));
+    }
+  };
+
+  const checkExistingActiveQueue = async () => {
+    try {
+      const { queueId } = await getQueueData();
+      if (queueId) {
+        const statusData = await getQueueStatus(queueId);
+        if (statusData && (statusData.status === 'waiting' || statusData.status === 'called')) {
+          Alert.alert(
+            t('alerts.activeQueueFound'),
+            t('alerts.activeQueueMessage'),
+            [
+              {
+                text: t('alerts.ok'),
+                onPress: () => navigation.replace('MainTabs', { screen: 'Status' }),
+              },
+            ]
+          );
+          return;
+        } else {
+          await clearQueueData();
+        }
+      }
+    } catch (error) {
+      console.log(t('alerts.noActiveQueue'), error);
+    } finally {
+      setCheckingExisting(false);
     }
   };
 
@@ -79,6 +108,7 @@ const JoinQueueScreen = ({ route }) => {
 
   const handleJoin = async () => {
     if (!validateForm()) return;
+    if (checkingExisting) return;
     
     setLoading(true);
     
@@ -88,19 +118,34 @@ const JoinQueueScreen = ({ route }) => {
       
       await saveQueueData(result.queue_id, result.queue_number);
       
+      let message = t('join.success');
+      let title = t('alerts.success');
+      
+      // Check if this is an existing queue (duplicate prevention from backend)
+      if (result.message && result.message.includes('already have an active queue')) {
+        message = t('join.existingQueue');
+        title = t('alerts.activeQueueFound');
+      }
+      
       Alert.alert(
-        'Success',
-        t('join.success'),
+        title,
+        message,
         [
           {
-            text: 'OK',
+            text: t('alerts.ok'),
             onPress: () => navigation.replace('MainTabs', { screen: 'Status' }),
           },
         ]
       );
     } catch (error) {
       console.error('Join error:', error);
-      Alert.alert('Error', error.response?.data?.error || t('join.error'));
+      let errorMessage = t('join.error');
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      Alert.alert(t('alerts.error'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -114,6 +159,16 @@ const JoinQueueScreen = ({ route }) => {
       setErrors({ ...errors, service: null });
     }
   };
+
+  // Show loading while checking for existing queue
+  if (checkingExisting) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('join.checking')}</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -172,7 +227,7 @@ const JoinQueueScreen = ({ route }) => {
         
         {/* Join Button */}
         <TouchableOpacity
-          style={[styles.joinButton, { backgroundColor: colors.primary }]}
+          style={[styles.joinButton, { backgroundColor: colors.primary, opacity: loading ? 0.6 : 1 }]}
           onPress={handleJoin}
           disabled={loading}
         >
@@ -235,6 +290,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
   },
   card: {
     borderRadius: 20,

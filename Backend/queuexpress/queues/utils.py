@@ -67,7 +67,11 @@ def get_people_ahead(queue_id):
     """
     Get number of people ahead in queue
     """
-    queue = Queue.objects.get(queue_id=queue_id)
+    from .models import Queue
+    try:
+        queue = Queue.objects.get(queue_id=queue_id)
+    except Queue.DoesNotExist:
+        return 0
     
     # Count waiting queues created before this one
     people_ahead = Queue.objects.filter(

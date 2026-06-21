@@ -40,6 +40,28 @@ def join_queue(request):
     phone_number = serializer.validated_data['phone_number']
     service_id = serializer.validated_data['service_id']
     
+    # CHECK: Does this phone number already have an active queue?
+    active_queue = Queue.objects.filter(
+        phone_number=phone_number,
+        status__in=['waiting', 'called']
+    ).first()
+    
+    if active_queue:
+        # Return existing queue info instead of creating a new one
+        estimated_time = calculate_estimated_time(active_queue.queue_id)
+        people_ahead = get_people_ahead(active_queue.queue_id)
+        
+        return Response({
+            'queue_id': active_queue.queue_id,
+            'queue_number': active_queue.queue_number,
+            'batch_number': active_queue.batch.batch_number,
+            'estimated_time': estimated_time,
+            'people_ahead': people_ahead,
+            'status': active_queue.status,
+            'service_name': active_queue.service.service_name,
+            'message': 'You already have an active queue. Here is your current status.'
+        }, status=status.HTTP_200_OK)
+    
     try:
         service = Service.objects.get(service_id=service_id)
     except Service.DoesNotExist:
@@ -51,9 +73,10 @@ def join_queue(request):
     # Get system settings
     settings = Settings.objects.first()
     if not settings:
-        return Response(
-            {'error': 'System settings not configured'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        from datetime import time
+        settings = Settings.objects.create(
+            batch_size=10,
+            reset_time=time(0, 0, 0)
         )
     
     batch_size = settings.batch_size
@@ -79,17 +102,20 @@ def join_queue(request):
         
         # Calculate estimated time
         estimated_time = calculate_estimated_time(queue.queue_id)
+        people_ahead = get_people_ahead(queue.queue_id)
     
     response_data = {
         'queue_id': queue.queue_id,
         'queue_number': queue_number,
         'batch_number': batch_number,
         'estimated_time': estimated_time,
-        'service_name': service.service_name
+        'people_ahead': people_ahead,
+        'status': queue.status,
+        'service_name': service.service_name,
+        'message': 'Successfully joined the queue!'
     }
     
     return Response(response_data, status=status.HTTP_201_CREATED)
-
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -111,6 +137,7 @@ def queue_status(request, queue_id):
     
     response_data = {
         'queue_number': queue.queue_number,
+        'batch_number': queue.batch.batch_number,  # Add this line
         'status': queue.status,
         'people_ahead': people_ahead,
         'estimated_time': estimated_time

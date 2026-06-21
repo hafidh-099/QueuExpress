@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import QueueStatusScreen from '../screens/QueueStatusScreen';
 import ScanQRScreen from '../screens/ScanQRScreen';
 import FeedbackScreen from '../screens/FeedbackScreen';
@@ -10,6 +11,8 @@ import SettingsScreen from '../screens/SettingsScreen';
 const Tab = createBottomTabNavigator();
 
 const MainTabs = () => {
+  const { t } = useTranslation();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -50,28 +53,28 @@ const MainTabs = () => {
         name="Status" 
         component={QueueStatusScreen}
         options={{
-          tabBarLabel: 'Queue',
+          tabBarLabel: t('tabs.status'),
         }}
       />
       <Tab.Screen 
         name="Scan" 
         component={ScanQRScreen}
         options={{
-          tabBarLabel: 'Scan',
+          tabBarLabel: t('tabs.scan'),
         }}
       />
       <Tab.Screen 
         name="Feedback" 
         component={FeedbackScreen}
         options={{
-          tabBarLabel: 'Feedback',
+          tabBarLabel: t('tabs.feedback'),
         }}
       />
       <Tab.Screen 
         name="Settings" 
         component={SettingsScreen}
         options={{
-          tabBarLabel: 'Settings',
+          tabBarLabel: t('tabs.settings'),
         }}
       />
     </Tab.Navigator>

@@ -8,12 +8,13 @@
     "submit": "Wasilisha"
   },
   "tabs": {
-    "status": "Hali ya Foleni",
-    "scan": "Scan QR",
+    "status": "Foleni",
+    "scan": "Scan",
     "feedback": "Maoni",
     "settings": "Mipangilio"
   },
   "status": {
+    "queueInfo": "Taarifa ya Foleni",
     "title": "Hali Yako ya Foleni",
     "queueNumber": "Namba ya Foleni",
     "batchNumber": "Namba ya Kundi",
@@ -27,7 +28,19 @@
     "called": "Umeitwa",
     "served": "Umehudumiwa",
     "skipped": "Umerukwa",
-    "minutes": "dak"
+    "minutes": "dak",
+    "youAreNext": "Wewe ndiye unaofuata!",
+    "peopleBeforeYou": "watu mbele yako",
+    "pleaseWait": "Wewe ndiye unaofuata! Tafadhali subiri zamu yako.",
+    "serviceCompleted": "Huduma Imekamilika!",
+    "thankYouMessage": "Asante kwa kutumia QueueXpress. Tafadhali toa maoni yako katika kipengele cha Maoni.",
+    "rateExperience": "Kadiria Uzoefu Wako",
+    "queueSkipped": "Foleni Imerekwa",
+    "skippedMessage": "Zamu yako ilirukwa. Unaweza kujiunga na foleni mpya ikiwa inahitajika.",
+    "joinNewQueue": "Jiunge na Foleni Mpya",
+    "clearQueue": "Futa Foleni (Anza Mpya)",
+    "queueNotFound": "Foleni Haipatikani",
+    "queueEndedMessage": "Foleni yako imeisha au haipo. Unaweza kujiunga na foleni mpya."
   },
   "scan": {
     "title": "Scan QR Code",
@@ -43,12 +56,15 @@
     "title": "Jiunge na Foleni",
     "service": "Chagua Huduma",
     "phoneNumber": "Namba ya Simu",
-    "phonePlaceholder": "623101586",
+    "phonePlaceholder": "Weka tarakimu 9",
     "phoneHint": "Weka tarakimu 9 (bila 0 au +255)",
     "joinButton": "Jiunga",
     "joining": "Inajiunga...",
     "success": "Umefanikiwa kujiunga na foleni!",
+    "existingQueue": "Tayari una foleni inayoendelea. Inaonyesha hali yako ya sasa.",
     "error": "Imeshindwa kujiunga",
+    "activeQueueFound": "una foleni tayari",
+    "checking": "Inakagua...",
     "validation": {
       "serviceRequired": "Tafadhali chagua huduma",
       "phoneRequired": "Namba ya simu inahitajika",
@@ -66,7 +82,11 @@
     "error": "Imeshindwa kuwasilisha maoni",
     "validation": {
       "ratingRequired": "Tafadhali chagua kiwango"
-    }
+    },
+    "cannotSubmit": "Haiwezi Kuwasilisha Maoni",
+    "mustBeServed": "Maoni yanaweza kuwasilishwa tu kwa foleni zilizokamilika (zilizohudumiwa).\n\nTafadhali jiunge na foleni mpya, hudumiwe, kisha wasilisha maoni yako.",
+    "joinQueue": "Jiunge na Foleni",
+    "infoNote": "Unaweza kuwasilisha maoni tu baada ya foleni yako kuwekwa alama ya 'Imehudumiwa'"
   },
   "settings": {
     "title": "Mipangilio",
@@ -90,5 +110,21 @@
     "almostThereBody": "Wateja 5 tu wamebakia kabla ya zamu yako. Tafadhali karibia eneo la huduma.",
     "youAreNext": "Wewe ndiye unaofuata!",
     "youAreNextBody": "Tafadhali enda kwenye kaunta ya huduma."
+  },
+  "alerts": {
+    "error": "Hitilafu",
+    "success": "Imefanikiwa",
+    "info": "Taarifa",
+    "warning": "Tahadhari",
+    "ok": "Sawa",
+    "cancel": "Ghairi",
+    "confirm": "Thibitisha",
+    "activeQueueFound": "Foleni Inayoendelea Imepatikana",
+    "activeQueueMessage": "Tayari una foleni inayoendelea. Utaelekezwa kwenye hali yako ya foleni.",
+    "queueCompleted": "Foleni Imekamilika",
+    "queueCleared": "Foleni Imefutwa",
+    "queueClearedMessage": "Unaweza kujiunga na foleni mpya.",
+    "joinQueuePrompt": "Tafadhali nenda kwenye kipengele cha Scan kujiunga na foleni",
+    "noActiveQueue": "Hakuna foleni inayoendelea iliyopatikana au hitilafu wakati wa kuangalia"
   }
 }
