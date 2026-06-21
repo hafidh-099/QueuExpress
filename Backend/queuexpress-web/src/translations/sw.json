@@ -1,0 +1,53 @@
+{
+  "join": {
+    "title": "Jiunge na Foleni",
+    "service": "Chagua Huduma",
+    "phoneNumber": "Namba ya Simu",
+    "phonePlaceholder": "Weka tarakimu 9",
+    "phoneHint": "Weka tarakimu 9 (bila 0 au +255)",
+    "joinButton": "Jiunga",
+    "joining": "Inajiunga...",
+    "success": "Umefanikiwa kujiunga na foleni!",
+    "error": "Imeshindwa kujiunga",
+    "existingQueue": "Tayari una foleni inayoendelea. Inaonyesha hali yako ya sasa.",
+    "validation": {
+      "serviceRequired": "Tafadhali chagua huduma",
+      "phoneRequired": "Namba ya simu inahitajika",
+      "phoneInvalid": "Tafadhali weka tarakimu 9"
+    }
+  },
+  "status": {
+    "queueNumber": "Namba ya Foleni",
+    "batchNumber": "Namba ya Kundi",
+    "status": "Hali",
+    "peopleAhead": "Watu Mbele Yako",
+    "estimatedTime": "Muda uliokadiriwa",
+    "minutes": "dak",
+    "waiting": "Unasubiri",
+    "called": "Umeitwa",
+    "served": "Umehudumiwa",
+    "skipped": "Umerukwa",
+    "youAreNext": "Wewe ndiye unaofuata!",
+    "peopleBeforeYou": "watu mbele yako",
+    "serviceCompleted": "Huduma Imekamilika!",
+    "thankYouMessage": "Asante kwa kutumia QueueXpress. Tafadhali toa maoni yako.",
+    "rateExperience": "Toa maoni yako",
+    "serviceCompletedMessage":"Huduma Imekamilika!!"
+  },
+  "feedback": {
+    "title": "Toa Maoni Yako",
+    "rating": "Kiwango Chako",
+    "message": "Ujumbe Wako",
+    "messagePlaceholder": "Tuambie kuhusu uzoefu wako...",
+    "submitButton": "Wasilisha Maoni",
+    "submitting": "Inawasilisha...",
+    "success": "Asante kwa maoni yako!",
+    "error": "Imeshindwa kuwasilisha maoni",
+    "infoNote": "Unaweza kuwasilisha maoni tu baada ya foleni yako kuwekwa alama ya 'Imehudumiwa'"
+  },
+  "footer": {
+    "supportEmail": "support@queuexpress.com",
+    "supportPhone": "+255 623 101 586",
+    "copyright": "© 2026 QueueXpress. Haki zote zimehifadhiwa."
+  }
+}

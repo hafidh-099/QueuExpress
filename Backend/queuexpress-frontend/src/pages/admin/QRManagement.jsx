@@ -1,22 +1,48 @@
-import React, { useState } from 'react';
-import { FaQrcode, FaDownload, FaPrint, FaCopy, FaShare, FaCheck } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaQrcode, FaDownload, FaPrint, FaCopy, FaShare, FaCheck, FaEdit } from 'react-icons/fa';
 
 const QRManagement = () => {
   const [qrValue, setQrValue] = useState('');
   const [joinLink, setJoinLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [serverIp, setServerIp] = useState('');
+  const [isEditingIp, setIsEditingIp] = useState(false);
 
-  // Get the frontend URL
-  const FRONTEND_URL = window.location.origin;
-  const JOIN_PAGE_URL = `${FRONTEND_URL}/join`;
+  // Load saved IP from localStorage on mount
+  useEffect(() => {
+    const savedIp = localStorage.getItem('queuexpress_server_ip');
+    if (savedIp) {
+      setServerIp(savedIp);
+    } else {
+      // Default to localhost if no saved IP
+      setServerIp('localhost');
+    }
+  }, []);
+
+  // Save IP to localStorage when changed
+  const saveServerIp = (ip) => {
+    setServerIp(ip);
+    localStorage.setItem('queuexpress_server_ip', ip);
+    setIsEditingIp(false);
+  };
+
+  // Get the frontend URL based on server IP
+  const getFrontendUrl = () => {
+    if (serverIp && serverIp !== 'localhost') {
+      return `http://${serverIp}:5174`;
+    }
+    return 'http://localhost:5174';
+  };
+
+  const JOIN_PAGE_URL = `${getFrontendUrl()}/join`;
 
   const handleGenerateQR = () => {
     setJoinLink(JOIN_PAGE_URL);
     setQrValue(JOIN_PAGE_URL);
   };
 
-  // Generate QR code URL using Google Charts API (simple and reliable)
+  // Generate QR code URL using Google Charts API
   const getQrCodeUrl = () => {
     if (!qrValue) return '';
     const size = 300;
@@ -32,11 +58,9 @@ const QRManagement = () => {
     setIsDownloading(true);
     try {
       const qrUrl = getQrCodeUrl();
-      // Fetch the image as a blob
       const response = await fetch(qrUrl);
       const blob = await response.blob();
       
-      // Create a download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -206,6 +230,13 @@ const QRManagement = () => {
     }
   };
 
+  const getCurrentIPDisplay = () => {
+    if (serverIp === 'localhost') {
+      return 'localhost (development)';
+    }
+    return serverIp;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -223,6 +254,61 @@ const QRManagement = () => {
           </h3>
           
           <div className="space-y-4">
+            {/* Server IP Configuration */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Server IP Address
+              </label>
+              <div className="flex gap-2">
+                {isEditingIp ? (
+                  <>
+                    <input
+                      type="text"
+                      value={serverIp}
+                      onChange={(e) => setServerIp(e.target.value)}
+                      placeholder="Enter IP or 'localhost'"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => saveServerIp(serverIp)}
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingIp(false);
+                        setServerIp(localStorage.getItem('queuexpress_server_ip') || 'localhost');
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 font-mono">
+                      {getCurrentIPDisplay()}
+                    </div>
+                    <button
+                      onClick={() => setIsEditingIp(true)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2"
+                    >
+                      <FaEdit size={14} />
+                      Change
+                    </button>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                {serverIp === 'localhost' 
+                  ? 'Using localhost (only works on this machine)' 
+                  : `Using IP: ${serverIp} (accessible on network)`}
+              </p>
+            </div>
+
+            {/* Join Page URL Display */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Join Page URL
@@ -231,7 +317,7 @@ const QRManagement = () => {
                 type="text"
                 value={JOIN_PAGE_URL}
                 readOnly
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 font-mono text-sm"
               />
               <p className="text-xs text-gray-400 mt-1">
                 Customers will be directed to this page to join the queue
@@ -324,22 +410,22 @@ const QRManagement = () => {
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
               1
             </div>
-            <p className="font-medium text-dark">Generate QR</p>
-            <p className="text-sm text-gray-500">Create QR code for queue joining page</p>
+            <p className="font-medium text-dark">Configure IP</p>
+            <p className="text-sm text-gray-500">Enter your server IP address</p>
           </div>
           <div className="text-center">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
               2
             </div>
-            <p className="font-medium text-dark">Download & Print</p>
-            <p className="text-sm text-gray-500">Save PNG or print poster for display</p>
+            <p className="font-medium text-dark">Generate QR</p>
+            <p className="text-sm text-gray-500">Create QR code for queue joining page</p>
           </div>
           <div className="text-center">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
               3
             </div>
-            <p className="font-medium text-dark">Display</p>
-            <p className="text-sm text-gray-500">Place at reception or TV screen</p>
+            <p className="font-medium text-dark">Download & Print</p>
+            <p className="text-sm text-gray-500">Save PNG or print poster for display</p>
           </div>
         </div>
       </div>

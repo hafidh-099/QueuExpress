@@ -1,0 +1,53 @@
+{
+  "join": {
+    "title": "Join the Queue",
+    "service": "Select Service",
+    "phoneNumber": "Phone Number",
+    "phonePlaceholder": "Enter 9 digits",
+    "phoneHint": "Enter 9 digits (without 0 or +255)",
+    "joinButton": "Join Queue",
+    "joining": "Joining...",
+    "success": "Successfully joined the queue!",
+    "error": "Failed to join queue",
+    "existingQueue": "You already have an active queue. Showing your current status.",
+    "validation": {
+      "serviceRequired": "Please select a service",
+      "phoneRequired": "Phone number is required",
+      "phoneInvalid": "Please enter exactly 9 digits"
+    }
+  },
+  "status": {
+    "queueNumber": "Queue Number",
+    "batchNumber": "Batch Number",
+    "status": "Status",
+    "peopleAhead": "People Ahead",
+    "estimatedTime": "Estimated Time",
+    "minutes": "min",
+    "waiting": "Waiting",
+    "called": "Called",
+    "served": "Served",
+    "skipped": "Skipped",
+    "youAreNext": "You're next in line!",
+    "peopleBeforeYou": "people before you",
+    "serviceCompleted": "Service Completed!",
+    "thankYouMessage": "Thank you for using QueueXpress. Please share your feedback.",
+    "rateExperience": "Rate Your Experience",
+    "serviceCompletedMessage":"Service Completed!"
+  },
+  "feedback": {
+    "title": "Share Your Feedback",
+    "rating": "Your Rating",
+    "message": "Your Message",
+    "messagePlaceholder": "Tell us about your experience...",
+    "submitButton": "Submit Feedback",
+    "submitting": "Submitting...",
+    "success": "Thank you for your feedback!",
+    "error": "Failed to submit feedback",
+    "infoNote": "You can only submit feedback after your queue has been marked as 'Served'"
+  },
+  "footer": {
+    "supportEmail": "support@queuexpress.com",
+    "supportPhone": "+255 623 101 586",
+    "copyright": "© 2026 QueueXpress. All rights reserved."
+  }
+}
