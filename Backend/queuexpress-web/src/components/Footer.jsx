@@ -9,7 +9,7 @@ const Footer = () => {
     <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-4 mt-6 transition-colors duration-300">
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex flex-col items-center gap-2">
-          {/* Support Email & Phone - Row on desktop, column on mobile */}
+          {/* Support Email & Phone */}
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
             <a
               href="mailto:support@queuexpress.com"

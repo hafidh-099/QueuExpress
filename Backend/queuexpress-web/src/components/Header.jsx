@@ -12,6 +12,8 @@ const Header = ({ language, setLanguage }) => {
     const newLang = language === 'en' ? 'sw' : 'en';
     setLanguage(newLang);
     localStorage.setItem('queuexpress-language', newLang);
+    // Reload page to apply language change
+    window.location.reload();
   };
 
   return (

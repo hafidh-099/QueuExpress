@@ -12,7 +12,13 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem('queuexpress-theme', theme);
-    document.documentElement.className = theme;
+    
+    // Apply dark class to html element
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [theme]);
 
   const toggleTheme = () => {

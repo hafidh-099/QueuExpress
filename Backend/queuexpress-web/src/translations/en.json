@@ -32,7 +32,8 @@
     "serviceCompleted": "Service Completed!",
     "thankYouMessage": "Thank you for using QueueXpress. Please share your feedback.",
     "rateExperience": "Rate Your Experience",
-    "serviceCompletedMessage":"Service Completed!"
+    "serviceCompletedMessage":"Service Completed!",
+    "skippedMessage":"skipped. Please re-join the queue"
   },
   "feedback": {
     "title": "Share Your Feedback",

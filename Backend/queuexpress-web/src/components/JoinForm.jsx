@@ -89,7 +89,7 @@ const JoinForm = ({ onJoinSuccess }) => {
         </label>
         <div className="flex">
           <span className="inline-flex items-center px-4 border border-r-0 border-gray-300 dark:border-gray-700 rounded-l-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm">
-            🇹🇿 +255
+            +255
           </span>
           <input
             type="text"

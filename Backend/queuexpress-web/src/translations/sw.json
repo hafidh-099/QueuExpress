@@ -32,7 +32,8 @@
     "serviceCompleted": "Huduma Imekamilika!",
     "thankYouMessage": "Asante kwa kutumia QueueXpress. Tafadhali toa maoni yako.",
     "rateExperience": "Toa maoni yako",
-    "serviceCompletedMessage":"Huduma Imekamilika!!"
+    "serviceCompletedMessage":"Huduma Imekamilika!!",
+    "skippedMessage":"umerukwa. tafadhali scan tena qr code kupata huduma"
   },
   "feedback": {
     "title": "Toa Maoni Yako",
