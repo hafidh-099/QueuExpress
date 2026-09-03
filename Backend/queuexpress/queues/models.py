@@ -100,3 +100,15 @@ class Feedback(models.Model):
     
     def __str__(self):
         return f"Feedback for Queue #{self.queue.queue_number} - Rating: {self.rating}"
+    
+class PushToken(models.Model):
+    phone_number = models.CharField(max_length=15, unique=True)
+    token = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'push_tokens'
+    
+    def __str__(self):
+        return f"{self.phone_number} - {self.token[:20]}..."

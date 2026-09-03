@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,30 +9,36 @@ import {
   Alert,
   Vibration,
   Dimensions,
-  Platform,
-} from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import Logo from '../components/Logo';
-import { getQueueStatus } from '../api/queue';
-import { getQueueData, clearQueueData } from '../storage/storage';
-import { useTheme } from '../context/ThemeContext';
+} from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import Logo from "../components/Logo";
+import { getQueueStatus } from "../api/queue";
+import { getQueueData, clearQueueData, getLanguage } from "../storage/storage";
+import { useTheme } from "../context/ThemeContext";
+import {
+  notifyStatusChange,
+  sendLocalNotification,
+} from "../services/notificationService";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 const QueueStatusScreen = () => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
   const [queueId, setQueueId] = useState(null);
   const [queueNumber, setQueueNumber] = useState(null);
-  const [previousStatus, setPreviousStatus] = useState(null);
+  const [language, setLanguage] = useState("en");
+  const [notificationSent, setNotificationSent] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState("en");
 
   useEffect(() => {
     loadSavedData();
+    loadLanguage();
   }, []);
 
   const loadSavedData = async () => {
@@ -41,67 +47,100 @@ const QueueStatusScreen = () => {
     setQueueNumber(data.queueNumber);
   };
 
+  const loadLanguage = async () => {
+    const lang = await getLanguage();
+    setLanguage(lang || "en");
+    setCurrentLanguage(lang || "en");
+    console.log("🌍 Current language:", lang);
+  };
+
+  const triggerHaptic = (status) => {
+    try {
+      switch (status) {
+        case "called":
+          Vibration.vibrate([500, 200, 500]);
+          break;
+        case "served":
+          Vibration.vibrate([300, 100, 300, 100, 500]);
+          break;
+        case "skipped":
+          Vibration.vibrate([200, 100, 200]);
+          break;
+        case "waiting":
+          Vibration.vibrate(100);
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error("Vibration error:", error);
+    }
+  };
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['queueStatus', queueId],
+    queryKey: ["queueStatus", queueId],
     queryFn: () => getQueueStatus(queueId),
     enabled: !!queueId,
     refetchInterval: 3000,
-    onSuccess: (statusData) => {
-      console.log('Queue status data:', statusData);
-      
-      // Check if status has changed
-      if (previousStatus && previousStatus !== statusData.status) {
-        console.log('Status changed from', previousStatus, 'to', statusData.status);
-        
-        // Trigger vibration based on new status
-        try {
-          switch (statusData.status) {
-            case 'called':
-              // Two long vibrations - "You've been called!"
-              Vibration.vibrate([500, 200, 500]);
-              break;
-            case 'served':
-              // Happy pattern - "Service completed!"
-              Vibration.vibrate([300, 100, 300, 100, 500]);
-              break;
-            case 'skipped':
-              // Two short vibrations - "You were skipped"
-              Vibration.vibrate([200, 100, 200]);
-              break;
-            case 'waiting':
-              // Short single vibration
-              Vibration.vibrate(100);
-              break;
-            default:
-              break;
-          }
-        } catch (error) {
-          console.error('Vibration error:', error);
-        }
-      }
-      
-      // Update previous status
-      setPreviousStatus(statusData.status);
-    },
     onError: (err) => {
       if (err?.response?.status === 404) {
-        Alert.alert(
-          t('status.queueNotFound'),
-          t('status.queueEndedMessage'),
-          [
-            {
-              text: t('status.joinNewQueue'),
-              onPress: () => navigation.navigate('MainTabs', { screen: 'Scan' }),
-            },
-            { text: t('alerts.ok') },
-          ]
-        );
+        Alert.alert(t("status.queueNotFound"), t("status.queueEndedMessage"), [
+          {
+            text: t("status.joinNewQueue"),
+            onPress: () => navigation.navigate("MainTabs", { screen: "Scan" }),
+          },
+          { text: t("alerts.ok") },
+        ]);
         clearQueueData();
         setQueueId(null);
         setQueueNumber(null);
       }
     },
   });
+
+  // ============================================================
+  // 🔔 NOTIFICATION LOGIC - HAPA NDIPO YOTE INATOKEA
+  // ============================================================
+  useEffect(() => {
+    if (!data?.status) return;
+
+    console.log("🔔 STATUS:", data.status);
+    console.log("🔔 QUEUE NUMBER:", data.queue_number);
+    console.log("🔔 NOTIFICATION SENT:", notificationSent);
+    console.log("🌍 Language:", currentLanguage);
+
+    // TUNAPOONA STATUS = "called" NA HATUJATUMA NOTIFICATION
+    if (data.status === "called" && !notificationSent) {
+      console.log("🎯 SENDING NOTIFICATION in", currentLanguage);
+      
+      // Tuma notification moja kwa moja - inatumia language kutoka state
+      notifyStatusChange(
+        "called",
+        data.queue_number,
+        currentLanguage
+      ).then((result) => {
+        console.log("✅ Notification result:", result);
+        if (result) {
+          setNotificationSent(true);
+        }
+      });
+
+      triggerHaptic("called");
+    }
+
+    // Reset notification flag when status changes from "called"
+    if (data.status !== "called") {
+      setNotificationSent(false);
+    }
+
+  }, [data?.status, data?.queue_number, notificationSent, currentLanguage]);
+
+  // Reset flag when component unmounts
+  useEffect(() => {
+    return () => {
+      setNotificationSent(false);
+    };
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -111,31 +150,31 @@ const QueueStatusScreen = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'waiting': return '#F59E0B';
-      case 'called': return '#3B82F6';
-      case 'served': return '#22C55E';
-      case 'skipped': return '#EF4444';
-      default: return '#64748B';
+      case "waiting": return "#F59E0B";
+      case "called": return "#3B82F6";
+      case "served": return "#22C55E";
+      case "skipped": return "#EF4444";
+      default: return "#64748B";
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'waiting': return t('status.waiting');
-      case 'called': return t('status.called');
-      case 'served': return t('status.served');
-      case 'skipped': return t('status.skipped');
+      case "waiting": return t("status.waiting");
+      case "called": return t("status.called");
+      case "served": return t("status.served");
+      case "skipped": return t("status.skipped");
       default: return status;
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'waiting': return 'time-outline';
-      case 'called': return 'call-outline';
-      case 'served': return 'checkmark-circle-outline';
-      case 'skipped': return 'close-circle-outline';
-      default: return 'help-circle-outline';
+      case "waiting": return "time-outline";
+      case "called": return "call-outline";
+      case "served": return "checkmark-circle-outline";
+      case "skipped": return "close-circle-outline";
+      default: return "help-circle-outline";
     }
   };
 
@@ -149,19 +188,19 @@ const QueueStatusScreen = () => {
             <Ionicons name="scan-outline" size={80} color={colors.primary} />
           </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            {t('status.noQueue')}
+            {t("status.noQueue")}
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('status.noQueueMessage')}
+            {t("status.noQueueMessage")}
           </Text>
           <TouchableOpacity
             style={styles.scanButton}
             onPress={() => {
-              navigation.navigate('MainTabs', { screen: 'Scan' });
+              navigation.navigate("MainTabs", { screen: "Scan" });
             }}
           >
             <Ionicons name="qr-code-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.scanButtonText}>{t('status.scanButton')}</Text>
+            <Text style={styles.scanButtonText}>{t("status.scanButton")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -176,7 +215,7 @@ const QueueStatusScreen = () => {
         <View style={styles.loadingContainer}>
           <Ionicons name="reload-outline" size={40} color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            {t('common.loading')}
+            {t("common.loading")}
           </Text>
         </View>
       </View>
@@ -190,11 +229,11 @@ const QueueStatusScreen = () => {
         <Logo size="small" showText={false} />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={80} color="#EF4444" />
-          <Text style={[styles.errorText, { color: '#EF4444' }]}>
-            {t('common.error')}
+          <Text style={[styles.errorText, { color: "#EF4444" }]}>
+            {t("common.error")}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
-            <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+            <Text style={styles.retryButtonText}>{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -215,21 +254,19 @@ const QueueStatusScreen = () => {
     >
       <Logo size="small" showText={false} />
 
-      {/* Main Card - Large Receipt Style */}
+      {/* Main Card */}
       <View style={[styles.mainCard, { 
         backgroundColor: colors.surface,
         shadowColor: colors.dark,
-        borderColor: statusColor + '40',
+        borderColor: statusColor + "40",
       }]}>
         
-        {/* Queue Info - Top */}
         <Text style={[styles.cardTitle, { color: colors.text }]}>
-          {t('status.queueInfo')}
+          {t("status.queueInfo")}
         </Text>
 
-        {/* Status - Below with spacing */}
         <View style={styles.statusContainer}>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + "20" }]}>
             <Ionicons name={statusIcon} size={18} color={statusColor} />
             <Text style={[styles.statusBadgeText, { color: statusColor }]}>
               {statusText}
@@ -237,34 +274,29 @@ const QueueStatusScreen = () => {
           </View>
         </View>
 
-        {/* Spacer */}
         <View style={styles.spacer} />
 
-        {/* Queue Number - Extra Large */}
         <Text style={[styles.queueNumber, { color: colors.primary }]}>
-          # {data?.queue_number || queueNumber || '-'}
+          # {data?.queue_number || queueNumber || "-"}
         </Text>
 
-        {/* People Ahead */}
         <View style={styles.peopleContainer}>
           <Ionicons name="people-outline" size={22} color={colors.warning} />
           <Text style={[styles.peopleText, { color: colors.textSecondary }]}>
-            {data?.people_ahead !== undefined ? data.people_ahead : '-'} {t('status.peopleAhead')}
+            {data?.people_ahead !== undefined ? data.people_ahead : "-"} {t("status.peopleAhead")}
           </Text>
         </View>
 
-        {/* Divider */}
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {/* Bottom Row */}
         <View style={styles.bottomRow}>
           <View style={styles.bottomItem}>
             <Ionicons name="time-outline" size={22} color={colors.primary} />
             <Text style={[styles.bottomLabel, { color: colors.textSecondary }]}>
-              {t('status.estimatedTime')}
+              {t("status.estimatedTime")}
             </Text>
             <Text style={[styles.bottomValue, { color: colors.primary }]}>
-              {data?.estimated_time !== undefined ? data.estimated_time : '-'} {t('status.minutes')}
+              {data?.estimated_time !== undefined ? data.estimated_time : "-"} {t("status.minutes")}
             </Text>
           </View>
           
@@ -273,41 +305,40 @@ const QueueStatusScreen = () => {
           <View style={styles.bottomItem}>
             <Ionicons name="layers-outline" size={22} color={colors.primary} />
             <Text style={[styles.bottomLabel, { color: colors.textSecondary }]}>
-              {t('status.batchNumber')}
+              {t("status.batchNumber")}
             </Text>
             <Text style={[styles.bottomValue, { color: colors.primary }]}>
-              {data?.batch_number || '-'}
+              {data?.batch_number || "-"}
             </Text>
           </View>
         </View>
 
-        {/* Decorative Bottom Line */}
-        <View style={[styles.decorativeLine, { borderColor: statusColor + '30' }]} />
+        <View style={[styles.decorativeLine, { borderColor: statusColor + "30" }]} />
       </View>
 
       {/* Served Action */}
-      {data?.status === 'served' && (
+      {data?.status === "served" && (
         <TouchableOpacity
-          style={[styles.actionCard, { backgroundColor: '#22C55E15', borderColor: '#22C55E' }]}
-          onPress={() => navigation.navigate('MainTabs', { screen: 'Feedback' })}
+          style={[styles.actionCard, { backgroundColor: "#22C55E15", borderColor: "#22C55E" }]}
+          onPress={() => navigation.navigate("MainTabs", { screen: "Feedback" })}
         >
           <Ionicons name="star-outline" size={22} color="#22C55E" />
-          <Text style={[styles.actionCardText, { color: '#22C55E' }]}>
-            {t('status.rateExperience')}
+          <Text style={[styles.actionCardText, { color: "#22C55E" }]}>
+            {t("status.rateExperience")}
           </Text>
           <Ionicons name="chevron-forward-outline" size={18} color="#22C55E" />
         </TouchableOpacity>
       )}
 
       {/* Skipped Action */}
-      {data?.status === 'skipped' && (
+      {data?.status === "skipped" && (
         <TouchableOpacity
-          style={[styles.actionCard, { backgroundColor: '#EF444415', borderColor: '#EF4444' }]}
-          onPress={() => navigation.navigate('MainTabs', { screen: 'Scan' })}
+          style={[styles.actionCard, { backgroundColor: "#EF444415", borderColor: "#EF4444" }]}
+          onPress={() => navigation.navigate("MainTabs", { screen: "Scan" })}
         >
           <Ionicons name="qr-code-outline" size={22} color="#EF4444" />
-          <Text style={[styles.actionCardText, { color: '#EF4444' }]}>
-            {t('status.joinNewQueue')}
+          <Text style={[styles.actionCardText, { color: "#EF4444" }]}>
+            {t("status.joinNewQueue")}
           </Text>
           <Ionicons name="chevron-forward-outline" size={18} color="#EF4444" />
         </TouchableOpacity>
@@ -324,10 +355,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
-
-  // Main Card
   mainCard: {
     width: width - 40,
     borderRadius: 24,
@@ -344,18 +373,18 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.5,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
   },
   statusContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 8,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 24,
@@ -363,50 +392,50 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   spacer: {
     height: 30,
   },
   queueNumber: {
     fontSize: 80,
-    fontWeight: '800',
-    textAlign: 'center',
+    fontWeight: "800",
+    textAlign: "center",
     marginBottom: 12,
     letterSpacing: 3,
   },
   peopleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 10,
     marginBottom: 28,
   },
   peopleText: {
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   divider: {
     height: 1.5,
     marginBottom: 24,
   },
   bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
   },
   bottomItem: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 4,
     flex: 1,
   },
   bottomLabel: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   bottomValue: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   bottomDivider: {
     width: 1,
@@ -417,15 +446,13 @@ const styles = StyleSheet.create({
     height: 3,
     borderWidth: 0,
     borderRadius: 4,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderWidth: 1,
   },
-
-  // Action Card
   actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 16,
     borderRadius: 16,
     marginBottom: 16,
@@ -435,54 +462,50 @@ const styles = StyleSheet.create({
   },
   actionCardText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-
-  // Empty State
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 60,
   },
   emptyIconContainer: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#0099CC10',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#0099CC10",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginHorizontal: 40,
     marginBottom: 24,
   },
   scanButton: {
-    flexDirection: 'row',
-    backgroundColor: '#0099CC',
+    flexDirection: "row",
+    backgroundColor: "#0099CC",
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 30,
     gap: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   scanButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-
-  // Loading & Error
   loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 60,
   },
   loadingText: {
@@ -490,8 +513,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   errorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 60,
   },
   errorText: {
@@ -499,15 +522,15 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   retryButton: {
-    backgroundColor: '#0099CC',
+    backgroundColor: "#0099CC",
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 20,
     marginTop: 20,
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });
 

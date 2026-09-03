@@ -30,6 +30,10 @@ urlpatterns = [
     path('admin/debug-queues/', views.debug_queues, name='debug_queues'),
     path('admin/all-queues/', views.admin_all_queues, name='admin_all_queues'),
     
+    #notification
+    path('register-push-token/', views.register_push_token, name='register_push_token'),
+    path('send-queue-notification/', views.send_queue_notification, name='send_queue_notification'),
+    
     # Admin Staff Management
 path('admin/staff/<int:staff_id>/', views.admin_staff_update, name='admin_staff_update'),
 ]

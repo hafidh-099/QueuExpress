@@ -6,6 +6,9 @@ from django.db import transaction
 from django.utils import timezone
 from math import ceil
 from django.contrib.auth import get_user_model
+from .models import PushToken
+
+User = get_user_model()
 
 from .models import Service, Queue, Feedback, Settings, Batch
 from .serializers import (
@@ -933,3 +936,119 @@ def admin_all_queues(request):
         'queues': queues_data
     }, status=status.HTTP_200_OK)
     
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_push_token(request):
+    """
+    Register push token for a customer
+    POST /api/register-push-token/
+    """
+    phone_number = request.data.get('phone_number')
+    push_token = request.data.get('push_token')
+    
+    if not phone_number or not push_token:
+        return Response(
+            {'error': 'Phone number and push token are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Store token associated with phone number
+    PushToken.objects.update_or_create(
+        phone_number=phone_number,
+        defaults={'token': push_token}
+    )
+    
+    return Response({'message': 'Push token registered successfully'}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_queue_notification(request):
+    """
+    Send notification to customer when queue status changes
+    POST /api/send-queue-notification/
+    """
+    phone_number = request.data.get('phone_number')
+    status_type = request.data.get('status')  # called, served, skipped
+    queue_number = request.data.get('queue_number')
+    language = request.data.get('language', 'en')
+    
+    if not phone_number or not status_type:
+        return Response(
+            {'error': 'Phone number and status are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Get push token
+    try:
+        push_token = PushToken.objects.get(phone_number=phone_number)
+    except PushToken.DoesNotExist:
+        return Response(
+            {'message': 'No push token found for this phone number'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Messages based on status
+    messages = {
+        'en': {
+            'called': {
+                'title': f' Your Turn is Here!',
+                'body': f'Queue #{queue_number} has been called. Please proceed to the service counter.'
+            },
+            'served': {
+                'title': ' Service Completed!',
+                'body': 'Thank you for using QueueXpress. Please share your feedback.'
+            },
+            'skipped': {
+                'title': ' Queue Skipped',
+                'body': 'Your turn was skipped. You can join a new queue if needed.'
+            }
+        },
+        'sw': {
+            'called': {
+                'title': f' Zamu Yako Imefika!',
+                'body': f'Foleni #{queue_number} imeitwa. Tafadhali enda kwenye kaunta ya huduma.'
+            },
+            'served': {
+                'title': ' Huduma Imekamilika!',
+                'body': 'Asante kwa kutumia QueueXpress. Tafadhali toa maoni yako.'
+            },
+            'skipped': {
+                'title': ' Foleni Imerekwa',
+                'body': 'Zamu yako ilirukwa. Unaweza kujiunga na foleni mpya ikiwa inahitajika.'
+            }
+        }
+    }
+    
+    lang_msgs = messages.get(language, messages['en'])
+    msg = lang_msgs.get(status_type, lang_msgs['called'])
+    
+    # Send push notification via Expo
+    import requests
+    expo_url = 'https://exp.host/--/api/v2/push/send'
+    
+    payload = {
+        'to': push_token.token,
+        'sound': 'default',
+        'title': msg['title'],
+        'body': msg['body'],
+        'priority': 'high',
+        'data': {
+            'screen': 'Status',
+            'queue_number': queue_number,
+            'status': status_type
+        }
+    }
+    
+    try:
+        response = requests.post(expo_url, json=payload, headers={
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip, deflate',
+            'Content-Type': 'application/json'
+        })
+        return Response(response.json(), status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
