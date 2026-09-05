@@ -44,6 +44,10 @@ function App() {
     setShowFeedback(false);
   };
 
+  const handleStatusChange = (newStatus) => {
+    setStatus(newStatus);
+  };
+
   const handleFeedbackSuccess = async () => {
     setShowFeedback(false);
     await clearQueueData();
@@ -51,13 +55,65 @@ function App() {
     setQueueNumber(null);
   };
 
+  const handleFeedbackClick = () => {
+    setShowFeedback(true);
+  };
+
+  // ============================================================
+  // 🔄 HANDLE JOIN AGAIN - CLEAR DATA AND RESET
+  // ============================================================
+  const handleJoinAgain = () => {
+    console.log('🔄 Joining again...');
+    
+    // Clear queue data from storage
+    clearQueueData();
+    
+    // Reset all state
+    setQueueId(null);
+    setQueueNumber(null);
+    setShowFeedback(false);
+    setStatus(null);
+    
+    // Force re-render to show join form
+    // window.location.reload(); // Uncomment if needed
+  };
+
+  // No active queue - show join form
+  if (!queueId) {
+    return (
+      <ThemeProvider>
+        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+          <Header language={language} setLanguage={setLanguage} />
+
+          <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 md:py-8">
+            {/* Logo */}
+            <div className="text-center mb-8 md:mb-10">
+              <img 
+                src={wordLogo} 
+                alt="QueueXpress" 
+                className="h-12 md:h-16 mx-auto object-contain"
+              />
+            </div>
+
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 md:p-8 transition-colors duration-300">
+              <JoinForm onJoinSuccess={handleJoinSuccess} />
+            </div>
+          </main>
+
+          <Footer />
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  // Show queue status
   return (
     <ThemeProvider>
       <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
         <Header language={language} setLanguage={setLanguage} />
 
         <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 md:py-8">
-          {/* Logo - Center with word logo only */}
+          {/* Logo */}
           <div className="text-center mb-8 md:mb-10">
             <img 
               src={wordLogo} 
@@ -66,26 +122,22 @@ function App() {
             />
           </div>
 
-          {/* Content Area */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 md:p-8 transition-colors duration-300">
-            {queueId ? (
-              <>
-                <QueueStatus
+            <QueueStatus
+              queueId={queueId}
+              queueNumber={queueNumber}
+              onFeedbackClick={handleFeedbackClick}
+              onStatusChange={handleStatusChange}
+              onJoinAgain={handleJoinAgain}
+            />
+            
+            {showFeedback && (
+              <div className="mt-6 animate-fadeIn">
+                <FeedbackForm
                   queueId={queueId}
-                  queueNumber={queueNumber}
-                  onFeedbackClick={() => setShowFeedback(true)}
+                  onSuccess={handleFeedbackSuccess}
                 />
-                {showFeedback && (
-                  <div className="mt-6">
-                    <FeedbackForm
-                      queueId={queueId}
-                      onSuccess={handleFeedbackSuccess}
-                    />
-                  </div>
-                )}
-              </>
-            ) : (
-              <JoinForm onJoinSuccess={handleJoinSuccess} />
+              </div>
             )}
           </div>
         </main>

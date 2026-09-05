@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Change this to your actual backend URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://10.44.111.69:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://10.8.2.77:8000/api';
 
 const api = axios.create({
   baseURL: API_URL,
