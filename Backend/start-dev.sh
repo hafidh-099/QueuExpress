@@ -18,3 +18,6 @@ echo "All services started!"
 echo "Django: http://localhost:8000"
 echo "Admin: http://localhost:5173"
 echo "Web Join: http://localhost:5174"
+
+npm run dev -- --host 0.0.0.0 --port 5174
+
