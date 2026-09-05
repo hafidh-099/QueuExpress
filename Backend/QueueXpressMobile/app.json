@@ -39,7 +39,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/splash-icon.png",
+          "icon": "./assets/icon.png",
           "color": "ffffff"
         }
       ]

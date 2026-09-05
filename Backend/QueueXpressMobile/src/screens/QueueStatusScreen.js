@@ -32,9 +32,13 @@ const QueueStatusScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [queueId, setQueueId] = useState(null);
   const [queueNumber, setQueueNumber] = useState(null);
-  const [language, setLanguage] = useState("en");
-  const [notificationSent, setNotificationSent] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState("en");
+  // ============================================================
+  // 🔔 FLAGS FOR EACH STATUS - KILA MOJA INA FLAG YAKE
+  // ============================================================
+  const [calledNotified, setCalledNotified] = useState(false);
+  const [servedNotified, setServedNotified] = useState(false);
+  const [skippedNotified, setSkippedNotified] = useState(false);
 
   useEffect(() => {
     loadSavedData();
@@ -49,34 +53,45 @@ const QueueStatusScreen = () => {
 
   const loadLanguage = async () => {
     const lang = await getLanguage();
-    setLanguage(lang || "en");
     setCurrentLanguage(lang || "en");
     console.log("🌍 Current language:", lang);
   };
 
-  const triggerHaptic = (status) => {
+  // ============================================================
+  // 📳 VIBRATION FUNCTION
+  // ============================================================
+  const triggerVibration = (status) => {
     try {
+      console.log("📳 Triggering vibration for status:", status);
+      
       switch (status) {
         case "called":
           Vibration.vibrate([500, 200, 500]);
+          console.log("📳 Vibration: Called");
           break;
         case "served":
           Vibration.vibrate([300, 100, 300, 100, 500]);
+          console.log("📳 Vibration: Served");
           break;
         case "skipped":
           Vibration.vibrate([200, 100, 200]);
+          console.log("📳 Vibration: Skipped");
           break;
         case "waiting":
           Vibration.vibrate(100);
+          console.log("📳 Vibration: Waiting");
           break;
         default:
           break;
       }
     } catch (error) {
-      console.error("Vibration error:", error);
+      console.error("❌ Vibration error:", error);
     }
   };
 
+  // ============================================================
+  // USEQUERY
+  // ============================================================
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["queueStatus", queueId],
     queryFn: () => getQueueStatus(queueId),
@@ -99,48 +114,80 @@ const QueueStatusScreen = () => {
   });
 
   // ============================================================
-  // 🔔 NOTIFICATION LOGIC - HAPA NDIPO YOTE INATOKEA
+  // 🔔 NOTIFICATION LOGIC - KILA STATUS INA FLAG YAKE
   // ============================================================
   useEffect(() => {
     if (!data?.status) return;
 
     console.log("🔔 STATUS:", data.status);
     console.log("🔔 QUEUE NUMBER:", data.queue_number);
-    console.log("🔔 NOTIFICATION SENT:", notificationSent);
+    console.log("📌 calledNotified:", calledNotified);
+    console.log("📌 servedNotified:", servedNotified);
+    console.log("📌 skippedNotified:", skippedNotified);
     console.log("🌍 Language:", currentLanguage);
 
-    // TUNAPOONA STATUS = "called" NA HATUJATUMA NOTIFICATION
-    if (data.status === "called" && !notificationSent) {
-      console.log("🎯 SENDING NOTIFICATION in", currentLanguage);
+    // ============================================================
+    // 1. STATUS = "called" - NOTIFICATION + VIBRATION
+    // ============================================================
+    if (data.status === "called" && !calledNotified) {
+      console.log("🎯 SENDING CALLED NOTIFICATION in", currentLanguage);
       
-      // Tuma notification moja kwa moja - inatumia language kutoka state
-      notifyStatusChange(
-        "called",
-        data.queue_number,
-        currentLanguage
-      ).then((result) => {
-        console.log("✅ Notification result:", result);
+      notifyStatusChange("called", data.queue_number, currentLanguage).then((result) => {
+        console.log("✅ Called notification result:", result);
         if (result) {
-          setNotificationSent(true);
+          setCalledNotified(true);
         }
       });
 
-      triggerHaptic("called");
+      triggerVibration("called");
     }
 
-    // Reset notification flag when status changes from "called"
+    // ============================================================
+    // 2. STATUS = "served" - NOTIFICATION + VIBRATION
+    // ============================================================
+    if (data.status === "served" && !servedNotified) {
+      console.log("✅ SENDING SERVED NOTIFICATION in", currentLanguage);
+      
+      notifyStatusChange("served", data.queue_number, currentLanguage).then((result) => {
+        console.log("✅ Served notification result:", result);
+        if (result) {
+          setServedNotified(true);
+        }
+      });
+
+      triggerVibration("served");
+    }
+
+    // ============================================================
+    // 3. STATUS = "skipped" - NOTIFICATION + VIBRATION
+    // ============================================================
+    if (data.status === "skipped" && !skippedNotified) {
+      console.log("⏭️ SENDING SKIPPED NOTIFICATION in", currentLanguage);
+      
+      notifyStatusChange("skipped", data.queue_number, currentLanguage).then((result) => {
+        console.log("✅ Skipped notification result:", result);
+        if (result) {
+          setSkippedNotified(true);
+        }
+      });
+
+      triggerVibration("skipped");
+    }
+
+    // ============================================================
+    // 🔄 RESET FLAGS WAKATI STATUS INABADILIKA
+    // ============================================================
     if (data.status !== "called") {
-      setNotificationSent(false);
+      setCalledNotified(false);
+    }
+    if (data.status !== "served") {
+      setServedNotified(false);
+    }
+    if (data.status !== "skipped") {
+      setSkippedNotified(false);
     }
 
-  }, [data?.status, data?.queue_number, notificationSent, currentLanguage]);
-
-  // Reset flag when component unmounts
-  useEffect(() => {
-    return () => {
-      setNotificationSent(false);
-    };
-  }, []);
+  }, [data?.status, data?.queue_number, currentLanguage]);
 
   const onRefresh = async () => {
     setRefreshing(true);
