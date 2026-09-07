@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hafidh099.QueueXpressMobile"
     },
     "android": {
       "permissions": [
@@ -40,7 +41,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "ffffff"
+          "color": "#ffffff"
         }
       ]
     ]
