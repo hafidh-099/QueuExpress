@@ -449,7 +449,7 @@ The project documentation includes:
 | Name | Role | Contribution |
 |---|---|---|
 | **Hafidh Mwita Haji** | Developer | Full-stack development, system design, testing, and documentation |
-| **Dr. Abdulrahman Haroun Haji** | Supervisor | Project guidance and evaluation |
+| **Dr. Abdulrahman Haroun Ali** | Supervisor | Project guidance and evaluation |
 
 ---
 
